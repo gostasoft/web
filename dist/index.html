@@ -11,7 +11,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="preload" as="image" href="assets/hero.webp" fetchpriority="high">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="auth.css">
   <script src="content.js" defer></script>
+  <script src="auth-config.js" defer></script>
+  <script src="auth.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body>
@@ -30,6 +33,8 @@
     <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 2 2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5z"/></symbol>
     <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 3h16v13H9l-5 5zM8 8h8M8 12h5"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></symbol>
   </svg>
 
   <header class="site-header">
@@ -74,7 +79,7 @@
           <div class="news-grid" id="news-grid" aria-live="polite"></div>
           <button class="all-news text-link" id="all-news">Tüm Haberleri Gör<svg class="icon"><use href="#i-arrow"/></svg></button>
         </div>
-        <aside class="account-card" aria-labelledby="account-title"><div class="card-topline"><svg class="icon"><use href="#i-shield"/></svg><span>OYUNCU PANELİ</span><span class="tiny-diamond"></span></div><h3 id="account-title">Yolculuğuna devam et.</h3><p>Hesabına giden kapı.</p><form id="account-preview"><label for="account-name">Kullanıcı adı</label><div class="input-wrap"><svg class="icon"><use href="#i-user"/></svg><input id="account-name" type="text" placeholder="Kullanıcı adın" readonly autocomplete="off" aria-describedby="account-note"></div><label for="account-password">Şifre</label><div class="input-wrap"><svg class="icon"><use href="#i-shield"/></svg><input id="account-password" type="password" placeholder="••••••••" readonly autocomplete="off" aria-describedby="account-note"></div><button type="submit" class="button primary full">Giriş Yap<svg class="icon"><use href="#i-arrow"/></svg></button></form><button class="forgot" data-modal="account">Şifremi Unuttum</button><div class="account-divider"><span>Yeni bir yolculuk mu?</span></div><button class="button outline full" data-modal="register">Hesap Oluştur</button><small class="account-note" id="account-note">Oyuncu paneli, açılış duyurusuyla birlikte.</small></aside>
+        <aside class="account-card" aria-labelledby="account-title"><div class="card-topline"><svg class="icon"><use href="#i-shield"/></svg><span>OYUNCU PANELİ</span><span class="tiny-diamond"></span></div><h3 id="account-title">Yolculuğuna devam et.</h3><div class="account-entry-icon"><svg class="icon"><use href="#i-user"/></svg></div><p class="account-entry-copy">Hesabına giriş yap veya kendi efsanen için ilk adımı at.</p><button class="button primary full" data-modal="account">Giriş Yap<svg class="icon"><use href="#i-arrow"/></svg></button><button class="button outline full" data-modal="register">Hesap Oluştur</button><a class="forgot" href="#sifre-yenile">Şifremi Unuttum</a></aside>
       </div>
     </section>
 
@@ -96,9 +101,11 @@
 
     <section class="community-section" aria-labelledby="community-title"><img src="assets/world-village.webp" alt="" loading="lazy" width="1280" height="720"><div class="community-shade"></div><div class="wrap community-inner"><div><p class="eyebrow">BİRLİKTE DAHA GÜÇLÜ</p><h2 id="community-title">Efsaneler tek başına yazılmaz.</h2><p>Aynı tutkuyu paylaş. Yol arkadaşlarını bul.</p></div><button class="button primary" data-modal="community">Topluluğa Katıl<svg class="icon"><use href="#i-arrow"/></svg></button></div></section>
   </main>
+  <main id="auth-main" hidden></main>
 
   <footer class="site-footer"><div class="wrap footer-main"><a class="brand" href="#anasayfa" aria-label="Metin3 ana sayfa"><span class="brand-word">METIN<span>3</span></span></a><nav aria-label="Alt gezinme"><a href="#dunya">Dünya</a><a href="#siniflar">Sınıflar</a><a href="#haberler">Haberler</a><a href="#destek">Destek</a></nav><button class="text-link" data-modal="about">Tasarım hakkında<svg class="icon"><use href="#i-arrow"/></svg></button></div><div class="wrap footer-bottom"><span>© 2026 METIN3</span><span>Web tasarım önizlemesi · Örnek tanıtım içerikleri</span><a href="#anasayfa">Başa dön ↑</a></div></footer>
   <dialog id="site-dialog" aria-labelledby="dialog-title"><button class="dialog-close icon-button" aria-label="Pencereyi kapat"><svg class="icon"><use href="#i-close"/></svg></button><div id="dialog-content"></div></dialog>
+  <dialog id="auth-art-editor" aria-labelledby="auth-art-title"></dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
 </html>

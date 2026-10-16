@@ -159,8 +159,8 @@ window.M3CONTENT = {
       answer: 'Bu önizlemede gerçek oyun indirmesi bulunmuyor. İstemci bağlantısı, proje ekibi tarafından paylaşıldığında erişime açılabilir.'
     },
     {
-      question: 'Kayıt olmak için hesap bilgilerimi girmeli miyim?',
-      answer: 'Hayır. Kayıt ve giriş bağlantıları bu önizlemede gerçek işlem yapmaz. Sayfayı gezmek için kullanıcı adı, şifre veya kişisel bilgi paylaşman gerekmez.'
+      question: 'Giriş ve kayıt ekranlarına nasıl ulaşabilirim?',
+      answer: 'Üst menüde Giriş Yap veya Kayıt Ol seçeneğini kullan. Ekranların solundaki Görseli değiştir düğmesiyle sahneyi kişiselleştirebilirsin. Gerçek hesap işlemleri, oyuncu hesap servisi açıldığında kullanılabilir.'
     }
   ]
 };

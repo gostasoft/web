@@ -106,8 +106,7 @@
     if (type === 'download') {
       showDialog('<div class="modal-pad"><p class="eyebrow">YOLCULUĞA İLK ADIM</p><h2 id="dialog-title">Yeni bir dünyaya<br>hazır mısın?</h2><p>İndirme bağlantıları hazır olduğunda bu alanda paylaşılacak. O zamana kadar Metin3 dünyasına ve karakterlerine göz atabilirsin.</p><div class="availability-row">' + icon('download') + '<div><strong>Oyun İstemcisi</strong><small>İndirme bilgileri duyurulacak</small></div><span class="soon-pill">Yakında</span></div><div class="modal-actions"><button class="button primary" data-jump="#dunya">Dünyayı Keşfet' + icon('arrow') + '</button><button class="button outline" data-jump="#haberler">Duyurular</button></div><p class="modal-note">Bu web önizlemesinden dosya indirilmez.</p></div>', false);
     } else if (type === 'register' || type === 'account') {
-      const register = type === 'register';
-      showDialog('<div class="modal-pad"><p class="eyebrow">METIN3 OYUNCU PANELİ</p><h2 id="dialog-title">' + (register ? 'Hikâyene ilk adımı at.' : 'Yolculuğun seni bekliyor.') + '</h2><p>Hesap ve giriş bağlantıları, hazır olduğunda bu alandan erişilebilir olacak. Şimdilik hangi karakterin hikâyesini yazmak istediğini keşfedebilirsin.</p><div class="modal-actions"><button class="button primary" data-jump="#siniflar">Sınıfını Seç' + icon('sword') + '</button><button class="button outline" data-jump="#haberler">Duyuruları Gör</button></div><p class="modal-note">Tasarım önizlemesinde hesap bilgisi alınmaz ve oturum açılmaz.</p></div>', false);
+      window.M3AUTH.open(type === 'register' ? 'register' : 'login');
     } else if (type === 'community') {
       showDialog('<div class="modal-pad"><p class="eyebrow">BİRLİKTE DAHA GÜÇLÜ</p><h2 id="dialog-title">Yol arkadaşlarını bul.</h2><p>Aynı dünyaya merak duyan oyuncularla buluş, hikâyeni paylaş. Resmî topluluk bağlantıları duyurulduğunda bu alanda yer alacak.</p><div class="modal-actions"><button class="button primary" data-jump="#haberler">Duyuruları Takip Et' + icon('chat') + '</button><button class="button outline" data-jump="#destek">Sorularına Yanıt Bul</button></div></div>', false);
     } else if (type === 'about') {
@@ -134,7 +133,6 @@
   $('#all-news').addEventListener('click', function () { state.allNews = !state.allNews; renderNews(); });
   $('[data-gallery="hero"]').addEventListener('click', function () { openGallery('assets/hero.webp', 'Metin3 — Kadim Dünya'); });
   $('#world-expand').addEventListener('click', function () { const item = content.worlds[state.worldIndex]; openGallery(item.img, item.title); });
-  $('#account-preview').addEventListener('submit', function (event) { event.preventDefault(); openModal('account'); });
   $('.dialog-close').addEventListener('click', function () { dialog.close(); });
   dialog.addEventListener('click', function (event) { if (event.target === dialog) { const rect = dialog.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close(); } });
   dialog.addEventListener('close', function () {
