@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c0b0d">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Metin3 · Yönetim Paneli</title>
+  <link rel="icon" href="/assets/brand/metin3-logo.png" type="image/png">
+  <link rel="stylesheet" href="/admin.css">
+  <script src="/content.js" defer></script>
+  <script src="/auth-config.js" defer></script>
+  <script src="/cms-defaults.js" defer></script>
+  <script src="/admin.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#editor">İçerik düzenleyiciye geç</a>
+  <section class="access-screen" id="access-screen" aria-live="polite">
+    <img class="access-logo" src="/assets/brand/metin3-logo.png" alt="Metin3">
+    <span class="eyebrow">YÖNETİM PANELİ</span>
+    <h1 id="access-title">Yönetim alanın hazırlanıyor.</h1>
+    <p id="access-description">Yetkiniz ve kayıtlı site içeriği kontrol ediliyor.</p>
+    <div class="access-actions" id="access-actions" hidden></div>
+    <span class="access-loader" id="access-loader" aria-label="Yükleniyor"></span>
+  </section>
+
+  <div class="admin-shell" id="admin-shell" hidden>
+    <aside class="sidebar" id="sidebar" aria-label="Yönetim menüsü">
+      <a class="admin-brand" href="/" target="_blank" rel="noopener" aria-label="Metin3 sitesini aç">
+        <img src="/assets/brand/metin3-logo.png" alt="Metin3">
+        <span>YÖNETİM MERKEZİ</span>
+      </a>
+      <div class="sidebar-caption">SİTE İÇERİĞİ</div>
+      <nav class="admin-nav" id="admin-nav"></nav>
+      <div class="sidebar-bottom">
+        <a class="site-link" href="/" target="_blank" rel="noopener"><span aria-hidden="true">↗</span> Siteyi aç</a>
+        <div class="admin-user"><span class="user-avatar" id="user-avatar">M</span><div><strong id="user-name">Site yöneticisi</strong><span id="user-email">Yetkili oturum</span></div><i aria-label="Oturum açık"></i></div>
+      </div>
+    </aside>
+
+    <div class="admin-workspace">
+      <header class="topbar">
+        <div class="topbar-leading"><button class="icon-button menu-toggle" id="menu-toggle" type="button" aria-label="Yönetim menüsünü aç" aria-expanded="false" aria-controls="sidebar">☰</button><span class="breadcrumb">Metin3 <span>/</span> <strong id="breadcrumb-current">Genel & Metinler</strong></span></div>
+        <div class="topbar-actions"><span class="save-state" id="save-state" role="status"><i></i> Kaydedildi</span><button class="button button-secondary" id="preview-toggle" type="button" aria-expanded="false">Önizleme <span aria-hidden="true">↗</span></button><button class="button button-primary" id="save-button" type="button" disabled><span aria-hidden="true">✓</span> Siteyi Kaydet</button></div>
+      </header>
+
+      <div class="notice" id="notice" role="alert" hidden></div>
+      <div class="editing-layout" id="editing-layout">
+        <main class="editor" id="editor" tabindex="-1">
+          <div class="page-intro"><div><span class="eyebrow">METİN3 İÇERİK STÜDYOSU</span><h1 id="section-title">Dünyanı yönet.</h1><p id="section-description">Sitenin sesini, görsellerini ve hikâyesini buradan şekillendir.</p></div><span class="intro-mark" aria-hidden="true">✦</span></div>
+          <div class="summary-grid" id="summary-grid"></div>
+          <div class="editor-toolbar"><div class="section-label" id="section-label">GENEL & METİNLER</div><div class="editor-tools"><button class="text-button" id="undo-button" type="button" disabled><span aria-hidden="true">↶</span> Geri al</button><button class="text-button" id="export-button" type="button">Yedek indir</button><button class="text-button" id="reset-button" type="button" disabled>Taslağı sıfırla</button></div></div>
+          <div class="section-content" id="section-content"></div>
+          <footer class="editor-footer"><span><i></i> Değişiklikler “Siteyi Kaydet” ile tüm ziyaretçilere uygulanır.</span><span id="revision-label">Sürüm —</span></footer>
+        </main>
+
+        <aside class="preview-pane" id="preview-pane" aria-label="Site önizlemesi" hidden>
+          <div class="preview-header"><div><span class="preview-dot"></span><strong>Canlı önizleme</strong><small>Kaydedilmemiş değişiklikleri de gösterir.</small></div><button class="icon-button" id="preview-close" type="button" aria-label="Önizlemeyi kapat">×</button></div>
+          <div class="preview-controls"><div class="segmented" role="group" aria-label="Önizleme ekranı"><button type="button" data-preview-size="desktop" class="active" aria-pressed="true">Masaüstü</button><button type="button" data-preview-size="mobile" aria-pressed="false">Mobil</button></div><button class="text-button" id="preview-refresh" type="button">↻ Yenile</button></div>
+          <div class="preview-viewport" id="preview-viewport"><iframe id="site-preview" title="Metin3 site önizlemesi" src="about:blank" loading="lazy" referrerpolicy="same-origin"></iframe></div>
+        </aside>
+      </div>
+    </div>
+  </div>
+  <div class="sidebar-scrim" id="sidebar-scrim" hidden></div>
+  <div class="toast" id="toast" role="status" hidden></div>
+</body>
+</html>
