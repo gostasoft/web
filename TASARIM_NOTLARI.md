@@ -4,7 +4,7 @@ Grand2 referansının indirme, hesap erişimi ve oyun tanıtımı yapısından h
 
 ## Tasarım
 
-Koyu kömür, şampanya altını ve sınırlı kızıl vurgular. Büyük açılış görseli; haber filtreleri; dört karakter sınıfı; değiştirilebilir dünya galerisi; mobil menü ve bilgi pencereleri.
+Kömür siyahı zemin, koyu bordo paneller ve kırmızıdan siyaha yaklaşan yumuşak geçişler. Ana butonlarda kızıl–bordo gradyan, başlıklarda açık kızıl vurgu ve okunaklı sıcak beyaz metinler kullanılır. Aynı renk dili mobil menü, kartlar, formlar ve bilgi pencerelerinde de sürdürülür. Büyük açılış görseli; haber filtreleri; dört karakter sınıfı; değiştirilebilir dünya galerisi; mobil menü ve bilgi pencereleri.
 
 Bu sürüm tanıtım önizlemesidir. Hesap, indirme ve topluluk bağlantıları gerçek hizmetlere bağlı değildir. Haberler örnek tanıtım içerikleridir. Görseller, önceki tasarım çalışmalarından alınan yapay zekâ konsept çizimleri ve bu sayfa için üretilen açılış çizimidir.
 
