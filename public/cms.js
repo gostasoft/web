@@ -77,8 +77,4 @@
     window.M3CMS_READY.then(() => requestAnimationFrame(() => parent.postMessage({ type: 'm3-cms-ready' }, location.origin)));
   }
 
-  fetch('/api/admin/session', { credentials: 'same-origin', cache: 'no-store' }).then(response => {
-    if (!response.ok) return;
-    document.querySelectorAll('[data-admin-link]').forEach(element => { element.hidden = false; });
-  }).catch(() => {});
 })();

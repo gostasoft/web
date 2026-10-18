@@ -1,12 +1,12 @@
-import html from "../../public/admin.html?raw";
+import html from "./panel.html?raw";
 import { getCmsAdmin } from "@/lib/cms-server";
 import { CmsInputError } from "@/lib/cms-validation";
 
 export const dynamic = "force-dynamic";
 
-export function GET(request: Request): Response {
+export async function GET(request: Request): Promise<Response> {
   try {
-    getCmsAdmin(request);
+    await getCmsAdmin(request);
     return new Response(html, { headers: {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "no-store",
@@ -15,9 +15,9 @@ export function GET(request: Request): Response {
       "Referrer-Policy": "same-origin",
     } });
   } catch (error) {
-    if (error instanceof CmsInputError && error.status === 401) {
+    if (error instanceof CmsInputError && (error.status === 401 || error.status === 403)) {
       return new Response(null, { status: 302, headers: {
-        "Location": "/signin-with-chatgpt?return_to=%2Fadmin",
+        "Location": "/#giris",
         "Cache-Control": "no-store",
       } });
     }

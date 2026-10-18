@@ -6,7 +6,7 @@ Oyuncu giriş ekranı `/#giris`, kayıt ekranı `/#kayit` adresinde açılır. �
 
 Giriş ve kayıt sayfaları iki sütundan oluşur: solda karakter veya sahne görseli, sağda form bulunur. Ziyaretçi ekranlarındaki **Görseli değiştir** alanı kaldırılmıştır. Görseller ve metinler artık merkezi yönetim panelinden değiştirilir:
 
-1. Sitenin `/admin` adresini aç ve yetkili site sahibi ChatGPT hesabınla giriş yap.
+1. Sitenin normal **Giriş Yap** ekranını (`/#giris`) aç. Site sahibine özel tanımlanan yönetici kullanıcı adı ve şifreyle giriş yaptığında `/admin` paneline yönlendirilirsin. Ana menüde veya alt bilgide yönetici bağlantısı bulunmaz.
 2. Menüden **Giriş ve Kayıt** bölümünü seç.
 3. **Giriş Yap** veya **Kayıt Ol** sekmesini aç.
 4. Sağ formun başlık ve açıklamasını; sol sahnenin üst başlık, ana başlık ve açıklamasını düzenle. Bu iki metin grubu birbirinden bağımsızdır.
@@ -19,11 +19,13 @@ Panelin diğer bölümleri, yedekler ve kayıt çakışmaları için [Yönetici 
 
 ## Oyuncu hesabı işlemlerinin durumu
 
-Formlarda boş alan, e-posta, yeni kullanıcı adı, şifre uzunluğu ve şifre eşleşmesi denetlenir; şifre göster/gizle kullanılabilir. **Kullanıcı adımı hatırla** seçilirse yalnızca kullanıcı adı ilgili tarayıcıda saklanır.
+Formlarda boş alan, e-posta, yeni kullanıcı adı, şifre uzunluğu ve şifre eşleşmesi denetlenir; şifre göster/gizle kullanılabilir. **Kullanıcı adımı hatırla**, oyuncu hesap servisi bağlanana kadar devre dışıdır. Yönetici kullanıcı adı ve şifresi tarayıcı depolamasına kaydedilmez; önceki sürümden kalan hatırlanan kullanıcı adı ekran açıldığında, başarılı yönetici girişinde ve çıkışta temizlenir.
 
-Oyuncu hesabı API'si henüz bağlı değildir. Formlar gerçek hesap oluşturmaz, oyuncu oturumu açmaz ve kurtarma e-postası göndermez. Şifreler sunucuya gönderilmez veya yerel depolamaya kaydedilmez; form gönderiminde durum kullanıcıya açıklanır. Bu işlemlerin çalışması için oyun hesabı servisinin ayrıca bağlanması gerekir.
+Giriş formu kullanıcı adı ve şifreyi aynı sitedeki `/api/auth/login` adresine HTTPS üzerinden gönderir. Yalnızca site sahibi için tanımlanan özel yönetici bilgileri doğrulandığında gerçek yönetici oturumu açılır. Başarısız denemelerde genel bir hata gösterilir; sahte oyuncu oturumu açılmaz.
 
-Yönetim panelinin ChatGPT girişi yalnızca site içeriğini düzenleme yetkisini doğrular; oyuncu hesabı girişiyle bağlantılı değildir.
+Oyuncu hesabı API'si henüz bağlı değildir. Normal oyuncular için giriş, hesap oluşturma ve kurtarma e-postası işlemleri çalışmaz. Kayıt ve kurtarma formları bilgileri bir servise göndermez; bu durum kullanıcıya açıklanır. Oyun hesabı işlemleri için oyuncu hesap servisinin ayrıca bağlanması gerekir. Gönderim sonrasında şifre alanları temizlenir; şifreler yerel depolamaya kaydedilmez.
+
+Yönetici oturumu en çok 8 saat sürer. Paneldeki **Güvenli çıkış**, sunucudaki oturum çerezini temizler ve normal giriş ekranına döner. Özel giriş bilgileri yalnızca Sites sunucu sırlarında yapılandırılır; HTML, JavaScript veya bu belgelerde gerçek giriş bilgisi bulunmaz. Ayrıntılar: [Yönetici Paneli](YONETICI_PANELI.md).
 
 ## Kaynak dosyaları
 

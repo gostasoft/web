@@ -16,9 +16,12 @@
   const percentage = (value, fallback) => Number.isFinite(Number(value)) ? Math.max(0, Math.min(100, Number(value))) : fallback;
   let active = null;
 
-  function readUsername() {
-    try { return localStorage.getItem('m3-remembered-username') || ''; } catch (_) { return ''; }
+  function clearRememberedUsername() {
+    try { localStorage.removeItem('m3-remembered-username'); } catch (_) { /* Browser storage is optional. */ }
   }
+  // The earlier preview could remember any entered name. Clear that legacy
+  // value before a form is shown; private credentials must never be prefilled.
+  clearRememberedUsername();
 
   function artwork(mode) {
     const defaults = window.M3AUTH_CONFIG[artMode(mode)];
@@ -50,13 +53,12 @@
   function formMarkup(mode) {
     const register = mode === 'register';
     const recovery = mode === 'password' || mode === 'username';
-    const remembered = readUsername();
     let fields = '';
     if (register) fields += field('name', text('form.name', 'Adın ve soyadın'), 'text', {
       autocomplete: 'name', optional: true, placeholder: text('form.name', 'Adın ve soyadın') + ' (isteğe bağlı)'
     });
     if (!recovery) fields += field('username', text('form.username', 'Kullanıcı adı'), 'text', {
-      autocomplete: 'username', value: register ? '' : remembered
+      autocomplete: 'username'
     });
     if (register || recovery) fields += field('email', text('form.email', 'E-posta adresi'), 'email', {
       autocomplete: 'email', icon: 'mail', placeholder: 'ornek@eposta.com'
@@ -66,8 +68,7 @@
       hint: register ? 'En az 8 karakter, bir harf ve bir rakam.' : ''
     });
     if (register) fields += field('confirm', text('form.passwordConfirm', 'Şifre tekrar'), 'password', { autocomplete: 'new-password' });
-    const extra = mode === 'login' ? '<div class="auth-options"><label class="auth-checkbox"><input name="remember" type="checkbox"' +
-      (remembered ? ' checked' : '') + '><span>' + esc(text('form.remember', 'Kullanıcı adımı hatırla')) +
+    const extra = mode === 'login' ? '<div class="auth-options"><label class="auth-checkbox" title="Oyuncu hesap servisi açıldığında kullanılabilir."><input name="remember" type="checkbox" disabled><span>' + esc(text('form.remember', 'Kullanıcı adımı hatırla')) +
       '</span></label><a href="#sifre-yenile">' + esc(text('form.forgotPassword', 'Şifremi unuttum')) + '</a></div>' : '';
     const submit = register ? text('button.register', 'Hesap Oluştur') : mode === 'login' ? text('button.login', 'Giriş Yap') : 'Devam Et';
     return '<form class="auth-form" data-auth-form="' + mode + '" novalidate>' + fields + extra +
@@ -158,7 +159,8 @@
     box.textContent = message;
   }
 
-  function submitForm(form) {
+  async function submitForm(form) {
+    if (form.dataset.submitting === 'true') return;
     const mode = form.dataset.authForm;
     const data = new FormData(form);
     let firstError;
@@ -182,18 +184,57 @@
     if (mode !== 'login' && (!email || !form.elements.namedItem('email').validity.valid)) invalid('email', 'Geçerli bir e-posta adresi gir.');
     if (mode === 'register' && (!data.get('confirm') || data.get('confirm') !== password)) invalid('confirm', 'Şifreler aynı olmalı.');
     if (firstError) { status('Lütfen işaretli alanları kontrol et.', true); firstError.focus(); return; }
-    if (mode === 'login') {
-      try {
-        if (data.has('remember')) localStorage.setItem('m3-remembered-username', username);
-        else localStorage.removeItem('m3-remembered-username');
-      } catch (_) { /* Remembering a username is optional. */ }
+    const clearPasswords = () => form.querySelectorAll('input[type="password"],input[data-password-visible]').forEach(input => { input.value = ''; });
+    if (mode !== 'login') {
+      // Registration and recovery do not have a player-account API. Never send
+      // these fields or imply an account or recovery email has been created.
+      clearPasswords();
+      status(mode === 'register' ? 'Hesap servisi henüz açılmadı. Bilgilerin gönderilmedi ve hesap oluşturulmadı.' :
+        'Hesap kurtarma servisi henüz açılmadı. E-posta gönderilmedi.', false);
+      return;
     }
-    // These player forms have no account API. Never send or persist passwords,
-    // create fake player accounts, or imply a successful authentication.
-    form.querySelectorAll('input[type="password"],input[data-password-visible]').forEach(input => { input.value = ''; });
-    status(mode === 'register' ? 'Hesap servisi henüz açılmadı. Bilgilerin gönderilmedi ve hesap oluşturulmadı.' :
-      mode === 'login' ? 'Giriş servisi henüz açılmadı. Bilgilerin gönderilmedi ve oturum açılmadı.' :
-      'Hesap kurtarma servisi henüz açılmadı. E-posta gönderilmedi.', false);
+
+    const submitButton = form.querySelector('button[type="submit"]');
+    const buttonMarkup = submitButton.innerHTML;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+    form.dataset.submitting = 'true';
+    form.setAttribute('aria-busy', 'true');
+    submitButton.disabled = true;
+    submitButton.textContent = 'Kontrol ediliyor…';
+    status('Giriş bilgilerin kontrol ediliyor…', false);
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+        signal: controller.signal
+      });
+      let result = {};
+      try { result = await response.json(); } catch (_) { /* Treat malformed responses as unsuccessful. */ }
+      if (response.ok && result.authenticated === true) {
+        clearRememberedUsername();
+        clearPasswords();
+        window.location.assign('/admin');
+        return;
+      }
+      if (form.isConnected) {
+        status(response.status === 401 ? 'Kullanıcı adı veya şifre hatalı.' :
+          response.status === 429 ? 'Çok fazla deneme yapıldı. Lütfen daha sonra tekrar dene.' :
+          'Giriş işlemi tamamlanamadı. Lütfen daha sonra tekrar dene.', true);
+      }
+    } catch (_) {
+      if (form.isConnected) status('Giriş sunucusuna ulaşılamadı. Bağlantını kontrol edip tekrar dene.', true);
+    } finally {
+      clearTimeout(timeout);
+      clearPasswords();
+      delete form.dataset.submitting;
+      form.removeAttribute('aria-busy');
+      submitButton.disabled = false;
+      submitButton.innerHTML = buttonMarkup;
+    }
   }
 
   document.addEventListener('submit', event => {

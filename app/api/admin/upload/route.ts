@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request): Promise<Response> {
   try {
-    const user = getCmsAdmin(request);
+    const user = await getCmsAdmin(request);
     requireSameOrigin(request);
     const contentType = request.headers.get("content-type") ?? "";
     if (!contentType.toLowerCase().startsWith("multipart/form-data;")) throw new CmsInputError("Görsel dosyası seç.", 415);

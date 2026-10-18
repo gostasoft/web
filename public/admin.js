@@ -23,7 +23,7 @@
     account: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
     link: '<path d="m10 13 4-4M8 16l-1 1a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0M16 8l1-1a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0" transform="translate(0 -1)"/>',
   };
-  const state = { data: null, saved: null, revision: null, dirty: false, saving: false, uploads: 0, history: [], section: 'genel', authMode: 'login', previewOpen: false, previewLoaded: false, previewTimer: null, toastTimer: null, authorized: false, expanded: new Set(), filter: '' };
+  const state = { data: null, saved: null, revision: null, dirty: false, saving: false, loggingOut: false, uploads: 0, history: [], section: 'genel', authMode: 'login', previewOpen: false, previewLoaded: false, previewTimer: null, toastTimer: null, authorized: false, expanded: new Set(), filter: '' };
   let fieldIndex = 0;
 
   function el(tag, className, text) {
@@ -83,7 +83,8 @@
     const node = $('save-state');
     node.className = `save-state${state.dirty ? ' dirty' : ''}${state.saving ? ' saving' : ''}`;
     node.replaceChildren(el('i'), document.createTextNode(state.saving ? 'Kaydediliyor…' : state.uploads ? 'Görsel yükleniyor…' : state.dirty ? 'Kaydedilmemiş değişiklikler' : 'Tüm değişiklikler kaydedildi'));
-    $('save-button').disabled = !state.dirty || state.saving || state.uploads > 0;
+    $('save-button').disabled = !state.dirty || state.saving || state.loggingOut || state.uploads > 0;
+    $('logout-button').disabled = state.saving || state.loggingOut || state.uploads > 0;
     $('save-button').textContent = state.saving ? 'Kaydediliyor…' : '✓  Siteyi Kaydet';
     $('undo-button').disabled = !state.history.length || state.saving;
     $('reset-button').disabled = !state.dirty || state.saving;
@@ -135,14 +136,14 @@
     $('access-screen').hidden = false;
     $('admin-shell').hidden = true;
     const authError = error.status === 401 || error.status === 403;
-    $('access-title').textContent = error.status === 403 ? 'Bu alan site yöneticisine ait.' : authError ? 'Yönetim merkezine hoş geldin.' : 'Yönetim alanına ulaşılamadı.';
-    $('access-description').textContent = authError ? (error.status === 403 ? 'Bu hesap site içeriğini düzenleme yetkisine sahip değil. Site sahibi ChatGPT hesabıyla giriş yap.' : 'Site içeriğini düzenlemek için yetkili ChatGPT hesabınla güvenli giriş yap.') : 'Kayıtlı içerik yüklenemedi. Bağlantını kontrol edip yeniden deneyebilirsin.';
+    $('access-title').textContent = authError ? 'Oturum gerekli' : 'Yönetim alanına ulaşılamadı.';
+    $('access-description').textContent = authError ? 'Bu alanı kullanabilmek için giriş yapmalısın.' : 'Kayıtlı içerik yüklenemedi. Bağlantını kontrol edip yeniden deneyebilirsin.';
     const actions = $('access-actions');
     actions.hidden = false;
     actions.replaceChildren();
     if (authError) {
-      const signin = el('a', 'button button-primary', 'ChatGPT ile giriş yap');
-      signin.href = '/signin-with-chatgpt?return_to=%2Fadmin';
+      const signin = el('a', 'button button-primary', 'Giriş yap');
+      signin.href = '/#giris';
       signin.target = '_top';
       actions.append(signin);
     } else actions.append(button('Yeniden dene', 'button button-primary', initialize));
@@ -168,7 +169,7 @@
       state.history = [];
       const user = session.user || {};
       $('user-name').textContent = user.displayName || 'Site yöneticisi';
-      $('user-email').textContent = user.email || 'Yetkili ChatGPT oturumu';
+      $('user-email').textContent = user.email || 'Yetkili yönetici oturumu';
       $('user-avatar').textContent = (user.displayName || user.email || 'M').charAt(0).toLocaleUpperCase('tr-TR');
       $('access-screen').hidden = true;
       $('admin-shell').hidden = false;
@@ -555,11 +556,11 @@
     if (error.status !== 401 && error.status !== 403) return;
     notice('Yönetim oturumun sona erdi veya düzenleme yetkin değişti. Taslağın bu sayfada korunuyor. Yeniden giriş yapmadan önce yedeğini indirebilirsin.', [
       { label: 'Taslağı indir', handler: exportDraft },
-      { label: 'Giriş yap', handler: () => { location.href = '/signin-with-chatgpt?return_to=%2Fadmin'; } },
+      { label: 'Giriş yap', handler: () => { location.href = '/#giris'; } },
     ]);
   }
   async function save() {
-    if (!state.dirty || state.saving || state.uploads) return;
+    if (!state.dirty || state.saving || state.loggingOut || state.uploads) return;
     state.saving = true; updateStatus(); $('notice').hidden = true;
     const sendingData = clone(state.data);
     const sendingSnapshot = JSON.stringify(sendingData);
@@ -608,6 +609,28 @@
     remember(); state.data = JSON.parse(state.saved); state.expanded.clear(); changed(); renderSection(); notify('Taslak son kayıtlı sürüme döndürüldü.');
   }
 
+  async function logout() {
+    if (state.loggingOut || state.saving || state.uploads) return;
+    if (state.dirty && !window.confirm('Kaydedilmemiş değişikliklerin var. Kaydetmeden güvenli çıkış yapmak istiyor musun?')) return;
+    state.loggingOut = true;
+    $('logout-button').textContent = 'Çıkış yapılıyor…';
+    updateStatus();
+    try {
+      await api('/api/auth/logout', { method: 'POST' });
+      try { localStorage.removeItem('m3-remembered-username'); } catch (_) { /* Optional browser storage can be unavailable. */ }
+      state.authorized = false;
+      state.dirty = false;
+      state.history = [];
+      location.assign('/#giris');
+    } catch (error) {
+      notice('Çıkış tamamlanamadı. Oturumunun kapandığı doğrulanamadı; yeniden deneyebilirsin.', [{ label: 'Tekrar dene', handler: logout }]);
+    } finally {
+      state.loggingOut = false;
+      $('logout-button').textContent = '↪  Güvenli çıkış';
+      updateStatus();
+    }
+  }
+
   function previewPath() {
     const hash = state.section === 'hesap' ? (state.authMode === 'register' ? '#kayit' : '#giris') : state.section === 'siniflar' ? '#siniflar' : state.section === 'dunya' ? '#dunya' : state.section === 'haberler' ? '#haberler' : state.section === 'sorular' ? '#destek' : '';
     return `/?preview=1${hash}`;
@@ -644,6 +667,7 @@
   $('menu-toggle').addEventListener('click', () => { const open = !$('sidebar').classList.contains('open'); $('sidebar').classList.toggle('open', open); $('sidebar-scrim').hidden = !open; $('menu-toggle').setAttribute('aria-expanded', String(open)); });
   $('sidebar-scrim').addEventListener('click', closeMenu);
   $('save-button').addEventListener('click', save);
+  $('logout-button').addEventListener('click', logout);
   $('undo-button').addEventListener('click', undo);
   $('export-button').addEventListener('click', exportDraft);
   $('reset-button').addEventListener('click', resetDraft);

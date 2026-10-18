@@ -6,14 +6,14 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request): Promise<Response> {
   try {
-    getCmsAdmin(request);
+    await getCmsAdmin(request);
     return cmsJson(await readCmsDocument());
   } catch (error) { return cmsError(error); }
 }
 
 export async function PUT(request: Request): Promise<Response> {
   try {
-    const user = getCmsAdmin(request);
+    const user = await getCmsAdmin(request);
     requireSameOrigin(request);
     if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) throw new CmsInputError("İçerik JSON biçiminde gönderilmeli.", 415);
     const bytes = await readLimitedBody(request, MAX_DOCUMENT_BYTES + 8192);

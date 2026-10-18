@@ -2,6 +2,7 @@ import { env } from "cloudflare:workers";
 import { authorizeCmsAdmin, type CmsAdmin } from "./cms-security";
 import { CmsInputError, type CmsDocument } from "./cms-validation";
 import { readStoredCmsDocument, saveStoredCmsDocument, type CmsSnapshot } from "./cms-store";
+import { cmsCredentialVersion, cmsLoginConfigured, cmsSessionToken, hasCmsSession } from "./cms-auth";
 
 export function cmsJson(value: unknown, status = 200): Response {
   return Response.json(value, { status, headers: {
@@ -18,8 +19,17 @@ export function cmsError(error: unknown): Response {
   return cmsJson({ error: "İşlem tamamlanamadı. Lütfen yeniden dene." }, 503);
 }
 
-export function getCmsAdmin(request: Request): CmsAdmin {
-  return authorizeCmsAdmin(request.headers, env.CMS_ADMIN_EMAIL);
+export async function getCmsAdmin(request: Request): Promise<CmsAdmin> {
+  const admin = authorizeCmsAdmin(request.headers, env.CMS_ADMIN_EMAIL);
+  if (!cmsLoginConfigured(env.CMS_LOGIN_EMAIL, env.CMS_PASSWORD_HASH)) {
+    throw new CmsInputError("Yönetici oturumu gerekli. Lütfen yeniden giriş yap.", 401);
+  }
+  const credentialVersion = await cmsCredentialVersion(env.CMS_LOGIN_EMAIL!, env.CMS_PASSWORD_HASH!);
+  const token = cmsSessionToken(request);
+  if (!await hasCmsSession(cmsDb(), token, admin.id, credentialVersion)) {
+    throw new CmsInputError("Yönetici oturumu gerekli. Lütfen yeniden giriş yap.", 401);
+  }
+  return admin;
 }
 
 export function cmsDb(): D1Database {

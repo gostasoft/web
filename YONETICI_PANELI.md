@@ -4,9 +4,15 @@ Yönetim paneli, Metin3 sitesinin yazılarını, görsellerini ve bağlantılar�
 
 ## Panele giriş
 
-Sitenin `/admin` adresini aç: [Metin3 Yönetici Paneli](https://metin3-efsane-20261016.keendream2.chatgpt.site/admin).
+Sitenin normal [Giriş Yap ekranını](https://metin3-efsane-20261016.keendream2.chatgpt.site/#giris) aç ve site sahibi için tanımlanan özel kullanıcı adı/e-posta ve şifreyi gir. Doğru bilgiler doğrulandığında `/admin` paneline yönlendirilirsin. Ana menüde, alt bilgide veya ayrı bir herkese açık düğmede yönetici bağlantısı bulunmaz.
 
-Giriş gerektiğinde **ChatGPT ile giriş yap** seçeneğini kullan. Erişim, sunucuda yönetici olarak tanımlanan site sahibi hesabıyla sınırlandırılmıştır. Farklı bir ChatGPT hesabı oyuncu formlarını kullanarak yönetici olamaz. Yetkili oturumda ana sayfanın altındaki **Yönetim Paneli** bağlantısı da görünür.
+Özel giriş bilgileri yalnızca Sites sunucu sırlarında yapılandırılır; gerçek kullanıcı adı veya şifre kaynak kodunda, bu kılavuzda ve tarayıcı depolamasında tutulmaz. Sunucu, özel giriş bilgilerine ek olarak sitenin doğrulanmış sahip kimliğini de kontrol eder. Normal oyuncu kaydı yönetici yetkisi vermez.
+
+Oturum en çok **8 saat** geçerlidir; süre dolduğunda yeniden normal giriş ekranından giriş yap. Oturumsuz `/admin` erişimi giriş ekranına yönlenir. Ayrı bir ChatGPT giriş düğmesi veya yönetici şifresini içeren istemci ayarı yoktur.
+
+## Güvenli çıkış
+
+Panelin sol altında **Güvenli çıkış** düğmesi bulunur. Bu düğme `/api/auth/logout` üzerinden oturum çerezini sunucuda sonlandırır, önceki hatırlanan kullanıcı adını temizler ve `/#giris` ekranına döner. Kaydedilmemiş değişiklik varsa çıkmadan önce kaydet veya yedeğini indir. Oturum açma ve kapatma işlemleri aynı site üzerinden yapılır; panel çerezini JavaScript okuyamaz.
 
 ## İçerik bölümleri
 
@@ -51,4 +57,4 @@ Bağlantı veya kayıt hatasında taslak açık sayfada kalır. Oturum sona erer
 
 ## Oyuncu hesapları
 
-Bu panel site içeriğini yönetir. Oyuncu oluşturma, şifre sıfırlama, oyun hesabı girişi veya oyun sunucusu yönetimi sağlamaz. Oyuncu form ekranlarının arkasında henüz gerçek oyun hesabı API'si yoktur. Ayrıntılar: [Giriş ve kayıt ekranları](HESAP_EKRANLARI.md).
+Bu panel site içeriğini yönetir. Oyuncu oluşturma, şifre sıfırlama, oyun hesabı girişi veya oyun sunucusu yönetimi sağlamaz. Normal giriş formundaki sunucu çağrısı şu anda yalnızca özel yönetici girişini doğrular; gerçek oyun hesabı API'si henüz bağlı değildir. Ayrıntılar: [Giriş ve kayıt ekranları](HESAP_EKRANLARI.md).
