@@ -24,10 +24,21 @@ export type CmsSectionStyle = {
   imageSide: "left" | "right";
 };
 export type CmsSectionItem = { id: string; title: string; body: string; image: CmsImage; href: string };
-export type CmsSection = { id: string; kind: "builtin"; source: CmsBuiltinSource; visible: boolean } | {
-  id: string; kind: "text" | "imageText" | "cards" | "gallery" | "faq" | "cta";
+export type CmsSectionLayoutFrame = { width: number; height: number; align: "left" | "center" | "right" };
+export type CmsSectionLayout = { desktop: CmsSectionLayoutFrame; mobile: CmsSectionLayoutFrame };
+export type CmsCanvasRect = { x: number; y: number; width: number; height: number };
+export type CmsCanvasElement = {
+  id: string; type: "text" | "image" | "button" | "box"; name: string; visible: boolean; locked: boolean;
+  text: string; image: CmsImage; href: string;
+  style: { fontSize: number; mobileFontSize: number; fontWeight: "400" | "600" | "700"; fontFamily: "serif" | "sans"; color: string; background: string; borderColor: string; borderWidth: number; radius: number; opacity: number; align: "left" | "center" | "right" };
+  desktop: CmsCanvasRect; mobile: CmsCanvasRect;
+};
+export type CmsCanvas = { version: 1; desktop: { height: number }; mobile: { height: number }; elements: CmsCanvasElement[] };
+export type CmsSection = { id: string; kind: "builtin"; source: CmsBuiltinSource; visible: boolean; layout?: CmsSectionLayout } | {
+  id: string; kind: "text" | "imageText" | "cards" | "gallery" | "faq" | "cta" | "canvas";
   visible: boolean; source?: CmsBuiltinSource; eyebrow: string; title: string; body: string;
   image: CmsImage; button: { label: string; href: string }; style: CmsSectionStyle; items: CmsSectionItem[];
+  canvas?: CmsCanvas; layout?: CmsSectionLayout;
 };
 export type CmsPage = { id: string; slug: string; title: string; description: string; published: boolean; sections: CmsSection[] };
 export type CmsNavigation = { id: string; label: string; href: string; visible: boolean };
@@ -137,7 +148,7 @@ function collection(value: unknown, limit: number, label: string): asserts value
 }
 
 const BUILTIN_SOURCES = new Set(["hero", "start", "news", "classes", "world", "faq", "community"]);
-const CUSTOM_SECTION_KINDS = new Set(["text", "imageText", "cards", "gallery", "faq", "cta"]);
+const CUSTOM_SECTION_KINDS = new Set(["text", "imageText", "cards", "gallery", "faq", "cta", "canvas"]);
 const BUILDER_ID = /^[A-Za-z0-9_-]{1,100}$/;
 const PAGE_SLUG = /^[a-z][a-z0-9-]{0,59}$/;
 
@@ -165,21 +176,74 @@ function builderImage(value: unknown): void {
   input(value.fit === undefined || value.fit === "cover" || value.fit === "contain", "Görsel yerleşimi geçersiz.");
 }
 
-function builderSections(value: unknown, home: boolean): asserts value is CmsSection[] {
+function boundedNumber(value: unknown, minimum: number, maximum: number, integer = false): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= minimum && value <= maximum && (!integer || Number.isInteger(value));
+}
+
+function builderLayout(value: unknown): void {
+  exactBuilderFields(value, ["desktop", "mobile"], "Bölüm boyutları");
+  for (const device of ["desktop", "mobile"]) {
+    const frame = value[device];
+    exactBuilderFields(frame, ["width", "height", "align"], "Bölüm boyutu");
+    input(boundedNumber(frame.width, 20, 100, true) && (frame.height === 0 || boundedNumber(frame.height, 200, 6000, true)) && ["left", "center", "right"].includes(frame.align as string), "Bölüm genişliği, yüksekliği veya hizası geçersiz.");
+  }
+}
+
+function builderCanvas(value: unknown): number {
+  exactBuilderFields(value, ["version", "desktop", "mobile", "elements"], "Serbest tasarım");
+  input(value.version === 1, "Serbest tasarım sürümü geçersiz.");
+  const dimensions = { desktop: { width: 1200, height: 0 }, mobile: { width: 390, height: 0 } };
+  for (const device of ["desktop", "mobile"] as const) {
+    const frame = value[device];
+    exactBuilderFields(frame, ["height"], "Tasarım alanı");
+    input(boundedNumber(frame.height, 200, 6000, true), "Tasarım yüksekliği 200 ile 6000 arasında tam sayı olmalı.");
+    dimensions[device].height = frame.height;
+  }
+  builderRecords(value.elements, 50, "Tasarım nesneleri");
+  for (const element of value.elements) {
+    exactBuilderFields(element, ["id", "type", "name", "visible", "locked", "text", "image", "href", "style", "desktop", "mobile"], "Tasarım nesnesi");
+    input(["text", "image", "button", "box"].includes(element.type as string), "Tasarım nesnesinin türü geçersiz.");
+    input(boundedString(element.name, 100) && boundedString(element.text, 4000) && typeof element.visible === "boolean" && typeof element.locked === "boolean", "Tasarım nesnesinin metni veya durumu geçersiz.");
+    input(element.href === "" || isSafeLink(element.href), "Tasarım nesnesinin bağlantısı güvenli bir adres olmalı.");
+    builderImage(element.image);
+    const style = element.style;
+    exactBuilderFields(style, ["fontSize", "mobileFontSize", "fontWeight", "fontFamily", "color", "background", "borderColor", "borderWidth", "radius", "opacity", "align"], "Nesne görünümü");
+    input(boundedNumber(style.fontSize, 8, 160) && boundedNumber(style.mobileFontSize, 8, 100) && boundedNumber(style.borderWidth, 0, 8) && boundedNumber(style.radius, 0, 100) && boundedNumber(style.opacity, 0, 100), "Nesnenin yazı boyutu, kenarlığı veya saydamlığı geçersiz.");
+    const hexColor = (color: unknown) => typeof color === "string" && /^#[A-Fa-f0-9]{6}$/.test(color);
+    input(hexColor(style.color) && hexColor(style.borderColor) && (style.background === "transparent" || hexColor(style.background)), "Nesne renkleri altı haneli renk kodu olmalı.");
+    input(["400", "600", "700"].includes(style.fontWeight as string) && ["serif", "sans"].includes(style.fontFamily as string) && ["left", "center", "right"].includes(style.align as string), "Nesnenin yazı görünümü desteklenmiyor.");
+    for (const device of ["desktop", "mobile"] as const) {
+      const frame = element[device];
+      const dimensionsForDevice = dimensions[device];
+      exactBuilderFields(frame, ["x", "y", "width", "height"], "Nesne konumu");
+      input(boundedNumber(frame.x, 0, dimensionsForDevice.width, true) && boundedNumber(frame.y, 0, dimensionsForDevice.height, true) && boundedNumber(frame.width, 20, dimensionsForDevice.width, true) && boundedNumber(frame.height, 20, dimensionsForDevice.height, true), "Nesne konumu ve boyutu tasarım alanı içinde tam sayı olmalı.");
+      input(frame.x + frame.width <= dimensionsForDevice.width && frame.y + frame.height <= dimensionsForDevice.height, "Bir nesne tasarım alanının dışına taşıyor.");
+    }
+  }
+  return value.elements.length;
+}
+
+function builderSections(value: unknown, home: boolean, count = { elements: 0 }): asserts value is CmsSection[] {
   builderRecords(value, 40, home ? "Ana sayfa bölümleri" : "Sayfa bölümleri");
   const sources = new Set<string>();
   for (const section of value) {
     input(typeof section.visible === "boolean", "Bölüm görünürlüğü geçersiz.");
+    if (section.layout !== undefined) builderLayout(section.layout);
     if (section.kind === "builtin") {
       input(home, "Hazır site bölümleri yalnızca ana sayfada kullanılabilir.");
-      exactBuilderFields(section, ["id", "kind", "source", "visible"], "Hazır bölüm");
+      exactBuilderFields(section, ["id", "kind", "source", "visible", "layout"], "Hazır bölüm");
       input(typeof section.source === "string" && BUILTIN_SOURCES.has(section.source), "Hazır bölüm kaynağı geçersiz.");
       input(!sources.has(section.source), "Bir hazır bölüm ana sayfada yalnızca bir kez kullanılabilir.");
       sources.add(section.source);
       continue;
     }
-    exactBuilderFields(section, ["id", "kind", "source", "visible", "eyebrow", "title", "body", "image", "button", "style", "items"], "Özel bölüm");
+    exactBuilderFields(section, ["id", "kind", "source", "visible", "eyebrow", "title", "body", "image", "button", "style", "items", "layout", "canvas"], "Özel bölüm");
     input(typeof section.kind === "string" && CUSTOM_SECTION_KINDS.has(section.kind), "Bölüm türü geçersiz.");
+    input(section.kind !== "canvas" || section.canvas !== undefined, "Serbest tasarım bölümü için bir tasarım alanı gerekli.");
+    if (section.canvas !== undefined) {
+      count.elements += builderCanvas(section.canvas);
+      input(count.elements <= 500, "Sitedeki toplam tasarım nesnesi sayısı 500 sınırını aşıyor.");
+    }
     input(section.source === undefined || (typeof section.source === "string" && BUILTIN_SOURCES.has(section.source)), "Bölüm kaynağı geçersiz.");
     input(boundedString(section.eyebrow, 100) && boundedString(section.title, 200) && boundedString(section.body, 12000), "Bölüm metni geçersiz veya çok uzun.");
     builderImage(section.image);
@@ -202,7 +266,8 @@ function builderSections(value: unknown, home: boolean): asserts value is CmsSec
 function validateCmsBuilder(value: unknown): asserts value is CmsBuilder {
   exactBuilderFields(value, ["version", "home", "pages", "navigation"], "Sayfa düzenleyici");
   input(value.version === 1, "Sayfa düzenleyici sürümü geçersiz.");
-  builderSections(value.home, true);
+  const count = { elements: 0 };
+  builderSections(value.home, true, count);
   builderRecords(value.pages, 30, "Özel sayfalar");
   const slugs = new Set<string>();
   let sectionCount = value.home.length;
@@ -211,7 +276,7 @@ function validateCmsBuilder(value: unknown): asserts value is CmsBuilder {
     input(typeof page.slug === "string" && PAGE_SLUG.test(page.slug) && !slugs.has(page.slug), "Sayfa adresi küçük harfle başlamalı ve benzersiz olmalı (en fazla 60 karakter).");
     slugs.add(page.slug);
     input(boundedString(page.title, 200) && boundedString(page.description, 12000) && typeof page.published === "boolean", "Sayfa başlığı, açıklaması veya yayın durumu geçersiz.");
-    builderSections(page.sections, false);
+    builderSections(page.sections, false, count);
     sectionCount += page.sections.length;
     input(sectionCount <= 200, "Toplam bölüm sayısı 200 sınırını aşıyor.");
   }

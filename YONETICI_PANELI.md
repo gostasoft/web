@@ -18,8 +18,8 @@ Panelin sol altında **Güvenli çıkış** düğmesi bulunur. Bu düğme `/api/
 
 | Bölüm | Düzenleyebileceğin alanlar |
 | --- | --- |
-| **Sayfalar** | Özel sayfa oluşturma, adres ve yayın durumu; altı şablonla sayfa içeriklerini tasarlama. |
-| **Ana Sayfa Düzeni** | Mevcut site bölümlerini sıralama/gizleme; özel metin, görsel, kart, galeri, soru ve buton bölümleri ekleme. |
+| **Sayfalar** | Özel sayfa oluşturma, adres ve yayın durumu; yedi şablonla sayfa içeriklerini tasarlama. |
+| **Ana Sayfa Düzeni** | Mevcut bölümleri tutamaçtan sürükleyerek veya oklarla sıralama/gizleme; bölüm boyutlarını değiştirme; serbest tuval dahil özel bölümler ekleme. |
 | **Menü** | Menü bağlantısı ekleme, yazı/adres/görünürlük ve sıralama; özel sayfalara kısayollar. |
 | **Genel & Metinler** | Önemli düğme yazıları; ana sayfa ve bölüm başlıkları; açıklamalar, form etiketleri ve alt bilgi. Alanları arama kutusuyla bulabilirsin. Menü yazıları **Menü** bölümünden düzenlenir. |
 | **Görseller** | Site logosu, ana görsel, giriş/kayıt sahneleri, topluluk arka planı ve buton/form çerçeveleri gibi arayüz görselleri. |
@@ -33,6 +33,8 @@ Panelin sol altında **Güvenli çıkış** düğmesi bulunur. Bu düğme `/api/
 Haber, sınıf ve sahnelerdeki **kimlik/bağlantı adı** benzersiz olmalıdır. Kısa bir Latin harf, rakam, tire ve alt çizgi birleşimi kullan; örneğin `yeni-yolculuk`. Yukarı/aşağı oklar kayıtların sırasını değiştirir. Bir sınıf ve bir dünya sahnesi sitede bulunmaya devam etmelidir.
 
 Özel sayfalar, şablonlar ve ana sayfa düzeni için [Sayfa Düzenleyici kılavuzuna](SAYFA_DUZENLEYICI.md) bak. Yeni sayfalar önce taslak olarak oluşturulur; yayına açılıp kaydedilene kadar ziyaretçilere gösterilmez.
+
+**Serbest tasarım**, yazı/görsel/buton/kutu nesnelerini konumlandırma ve boyutlandırma aracıdır. Masaüstü ve mobil tuvalleri ayrı düzenlenir. Ayrıntılar: [Serbest Tasarım kılavuzu](SERBEST_TASARIM.md).
 
 ## Görsel yükleme ve kaydetme
 

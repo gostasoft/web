@@ -1,0 +1,13 @@
+/* Fixed design coordinates scale as one stage; every element stays inside it. */
+.builder-canvas{padding:0;overflow:hidden}
+.canvas-viewport{position:relative;width:100%;min-width:0;overflow:hidden;margin:0}
+.canvas-public-stage{position:absolute;inset:0 auto auto 0;transform-origin:top left;overflow:hidden;isolation:isolate}
+.canvas-background{position:absolute;inset:0;z-index:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.canvas-element{position:absolute;display:block;box-sizing:border-box;margin:0;padding:0;min-width:0;min-height:0;border-style:solid;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.2}
+.canvas-element-text{margin:0}
+.canvas-element-image-content{display:block;width:100%;height:100%;object-fit:cover}
+.canvas-element-button{display:flex;align-items:center;gap:0;padding:8px 14px;text-decoration:none;cursor:pointer}
+.canvas-element-button[aria-disabled=true]{cursor:default}
+a.canvas-element:focus-visible{outline:3px solid currentColor;outline-offset:-4px}
+.canvas-element-box{pointer-events:none}
+

@@ -26,7 +26,7 @@
     account: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
     link: '<path d="m10 13 4-4M8 16l-1 1a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0M16 8l1-1a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0" transform="translate(0 -1)"/>',
   };
-  const state = { data: null, saved: null, revision: null, dirty: false, saving: false, loggingOut: false, uploads: 0, history: [], section: 'genel', authMode: 'login', previewOpen: false, previewLoaded: false, previewTimer: null, toastTimer: null, authorized: false, expanded: new Set(), filter: '', builderPageId: null, builderSelection: {}, builderCatalog: null };
+  const state = { data: null, saved: null, revision: null, dirty: false, saving: false, loggingOut: false, uploads: 0, history: [], section: 'genel', authMode: 'login', previewOpen: false, previewLoaded: false, previewTimer: null, toastTimer: null, authorized: false, expanded: new Set(), filter: '', builderPageId: null, builderSelection: {}, builderCatalog: null, builderDrag: null };
   let fieldIndex = 0;
 
   function el(tag, className, text) {
@@ -273,6 +273,8 @@
   }
   function renderSection() {
     if (!state.data) return;
+    window.M3CANVAS_EDITOR?.destroy();
+    builderEndDrag();
     const section = sections.find((item) => item.id === state.section);
     $('section-title').textContent = section.title;
     $('section-description').textContent = section.description;
@@ -290,7 +292,7 @@
     else if (section.id === 'hesap') renderAuth(container);
     else if (section.id === 'baglantilar') renderLinks(container);
     updateStatus();
-    if (state.previewOpen && state.section === 'sayfalar') loadPreview();
+    if (state.previewOpen && ['sayfalar', 'duzen'].includes(state.section)) loadPreview();
   }
   function renderTexts(container) {
     const menuNote = el('div', 'section-note');
@@ -401,6 +403,7 @@
       if (src) picture.src = src; else picture.removeAttribute('src');
       stage.dataset.fit = options.stringValue ? (options.contain ? 'contain' : 'cover') : get([...path, 'fit']) || 'cover';
       picture.style.objectPosition = `${get([...path, 'x']) ?? 50}% ${get([...path, 'y']) ?? 50}%`;
+      if (options.onChange) options.onChange();
     }
     picture.addEventListener('error', () => { if (picture.src) imageError.hidden = false; });
     picture.addEventListener('load', () => { imageError.hidden = true; });
@@ -581,6 +584,13 @@
     notify('Site genelinde en çok 200 bölüm bulunabilir. Önce kullanmadığın bir bölümü kaldır.');
     return false;
   }
+  function builderCanCopyCanvas(sections) {
+    const all = [...state.data.builder.home, ...state.data.builder.pages.flatMap((page) => page.sections)];
+    const count = (entries) => entries.reduce((sum, section) => sum + (section.canvas?.elements?.length || 0), 0);
+    if (count(all) + count(sections) <= 500) return true;
+    notify('Site genelinde en çok 500 serbest tasarım nesnesi bulunabilir. Kopyalamadan önce kullanılmayan nesneleri kaldır.');
+    return false;
+  }
   function builderPageSlug(value, exceptId) {
     const base = window.M3BUILDER.slugify(value);
     const used = new Set(state.data.builder.pages.filter((page) => page.id !== exceptId).map((page) => page.slug));
@@ -608,6 +618,7 @@
     const duplicate = clone(section);
     duplicate.id = window.M3BUILDER.uid('bolum');
     duplicate.items = duplicate.items.map((item) => ({ ...item, id: window.M3BUILDER.uid('oge') }));
+    if (duplicate.canvas) duplicate.canvas.elements = duplicate.canvas.elements.map((element) => ({ ...window.M3CANVAS.duplicateElement(element), desktop: clone(element.desktop), mobile: clone(element.mobile) }));
     return duplicate;
   }
   function builderToggle(label, path, help = '', callback) {
@@ -685,6 +696,7 @@
     actions.append(button('Kopyasını oluştur', 'text-button', () => {
       if (pages.length >= 30) { notify('En çok 30 özel sayfa oluşturabilirsin.'); return; }
       if (!builderCanAddSections(page.sections.length)) return;
+      if (!builderCanCopyCanvas(page.sections)) return;
       const copy = clone(page); copy.id = window.M3BUILDER.uid('sayfa'); copy.title = (page.title + ' (kopya)').slice(0, 200); copy.slug = builderPageSlug(page.slug + '-kopya'); copy.published = false; copy.sections = page.sections.map(builderCopySection);
       mutate(() => { pages.push(copy); state.builderPageId = copy.id; });
       if (state.previewOpen) loadPreview();
@@ -701,9 +713,114 @@
   }
   function renderBuilderHome(container) {
     const note = el('p', 'section-note');
-    note.append(el('strong', '', 'Sıra ve görünürlük senin elinde. '), document.createTextNode('Hazır bölümleri oklarla taşıyabilir veya gizleyebilirsin. Kendi bölümlerini ekleyip içerik ve görünüm ayarlarını aşağıdan düzenle. Kaydedilene kadar ziyaretçiler etkilenmez.'));
+    note.append(el('strong', '', 'Sıra ve görünürlük senin elinde. '), document.createTextNode('Bölümleri soldaki tutamaçtan sürükleyerek veya oklarla taşıyabilir, gizleyebilir ve boyutlandırabilirsin. Serbest tasarım ile metin, görsel ve butonlarını istediğin yere yerleştir. Kaydedilene kadar ziyaretçiler etkilenmez.'));
     container.append(note);
     renderBuilderSectionList(container, ['builder', 'home'], 'home');
+  }
+  function builderEndDrag() {
+    state.builderDrag = null;
+    document.querySelectorAll('.builder-block-row').forEach((row) => { row.classList.remove('is-dragging'); row.classList.remove('drop-before'); row.classList.remove('drop-after'); });
+  }
+  function builderDragHandle(row, path, context, id, title) {
+    const handle = button('⠿', 'builder-drag-handle');
+    handle.draggable = true; handle.tabIndex = -1; handle.title = 'Bölümü sürükleyerek taşı. Klavyeyle taşımak için ok düğmelerini kullan.';
+    handle.setAttribute('aria-label', `${title}: sürükleyerek taşı`);
+    handle.addEventListener('dragstart', (event) => {
+      if (state.saving || state.loggingOut || state.uploads) { event.preventDefault(); return; }
+      state.builderDrag = { context, id };
+      if (event.dataTransfer) { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', id); }
+      row.classList.add('is-dragging');
+    });
+    handle.addEventListener('dragend', builderEndDrag);
+    row.addEventListener('dragover', (event) => {
+      if (!state.builderDrag || state.builderDrag.context !== context || state.builderDrag.id === id) return;
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+      document.querySelectorAll('.builder-block-row').forEach((item) => { item.classList.remove('drop-before'); item.classList.remove('drop-after'); });
+      const bounds = row.getBoundingClientRect();
+      const before = event.clientY < bounds.top + bounds.height / 2;
+      row.classList.add(before ? 'drop-before' : 'drop-after');
+    });
+    row.addEventListener('dragleave', (event) => {
+      if (event.relatedTarget && row.contains(event.relatedTarget)) return;
+      row.classList.remove('drop-before'); row.classList.remove('drop-after');
+    });
+    row.addEventListener('drop', (event) => {
+      const drag = state.builderDrag;
+      if (!drag || drag.context !== context || drag.id === id) return;
+      event.preventDefault(); event.stopPropagation();
+      const bounds = row.getBoundingClientRect();
+      const before = event.clientY < bounds.top + bounds.height / 2;
+      const entries = get(path);
+      const sourceIndex = entries.findIndex((item) => item.id === drag.id);
+      const targetIndex = entries.findIndex((item) => item.id === id);
+      builderEndDrag();
+      if (sourceIndex < 0 || targetIndex < 0) return;
+      mutate(() => {
+        const [moved] = entries.splice(sourceIndex, 1);
+        const destination = entries.findIndex((item) => item.id === id) + (before ? 0 : 1);
+        entries.splice(destination, 0, moved);
+        state.builderSelection[context] = moved.id;
+      });
+      notify('Bölüm sırası taslakta değiştirildi. Siteyi Kaydet ile uygula.');
+    });
+    return handle;
+  }
+  function renderBuilderLayout(container, path, section) {
+    const panel = card('Bölüm boyutu ve hizası', 'Masaüstü ve mobil ölçülerini ayrı ayarla. Bu ayarlar bölümün tamamını etkiler; otomatik yükseklik içeriğe uyum sağlar.');
+    const devices = el('div', 'builder-layout-devices');
+    let reset;
+    function ensure() {
+      if (!section.layout) section.layout = { desktop: { width: 100, height: 0, align: 'center' }, mobile: { width: 100, height: 0, align: 'center' } };
+      if (reset) reset.disabled = false;
+      return section.layout;
+    }
+    for (const device of ['desktop', 'mobile']) {
+      const value = section.layout?.[device] || { width: 100, height: 0, align: 'center' };
+      const group = el('div', 'builder-layout-device');
+      group.append(el('h3', '', device === 'desktop' ? 'Masaüstü' : 'Mobil'));
+      const fields = el('div', 'builder-layout-fields');
+      const numeric = (label, key, minimum, maximum, fallback) => {
+        const wrapper = el('div', 'field');
+        const caption = el('label', '', label);
+        const input = el('input'); input.id = `cms-field-${++fieldIndex}`; input.name = [...path, 'layout', device, key].join('.'); input.type = 'number'; input.min = String(minimum); input.max = String(maximum); input.step = '1'; input.value = key === 'height' && value.height === 0 ? fallback : value[key]; caption.htmlFor = input.id;
+        input.addEventListener('focus', remember);
+        input.addEventListener('input', () => {
+          const raw = input.value.trim();
+          const parsed = raw === '' ? fallback : Number(raw);
+          if (!Number.isFinite(parsed)) return;
+          ensure()[device][key] = Math.max(minimum, Math.min(maximum, Math.round(parsed)));
+          changed();
+        });
+        input.addEventListener('change', () => { input.value = section.layout?.[device]?.[key] ?? (key === 'height' ? fallback : 100); });
+        wrapper.append(caption, input);
+        return { wrapper, input };
+      };
+      const width = numeric('Genişlik (%)', 'width', 20, 100, 100);
+      const fallbackHeight = section.canvas?.[device]?.height || 600;
+      const height = numeric('Sabit yükseklik (px)', 'height', 200, 6000, fallbackHeight);
+      height.input.disabled = value.height === 0;
+      const align = el('div', 'field');
+      const alignLabel = el('label', '', 'Bölümün hizası');
+      const select = el('select'); select.id = `cms-field-${++fieldIndex}`; select.name = [...path, 'layout', device, 'align'].join('.'); alignLabel.htmlFor = select.id;
+      [['left', 'Sol'], ['center', 'Orta'], ['right', 'Sağ']].forEach(([key, label]) => { const option = el('option', '', label); option.value = key; select.append(option); });
+      select.value = value.align;
+      select.addEventListener('focus', remember);
+      select.addEventListener('change', () => { ensure()[device].align = select.value; changed(); });
+      align.append(alignLabel, select); fields.append(width.wrapper, height.wrapper, align);
+      const automatic = el('label', 'builder-layout-auto');
+      const checkbox = el('input'); checkbox.type = 'checkbox'; checkbox.checked = value.height === 0; checkbox.name = [...path, 'layout', device, 'automatic'].join('.');
+      checkbox.addEventListener('change', () => {
+        mutate(() => { ensure()[device].height = checkbox.checked ? 0 : Math.max(200, Math.min(6000, Number(height.input.value) || fallbackHeight)); }, false);
+        height.input.disabled = checkbox.checked;
+        if (!checkbox.checked) height.input.value = section.layout[device].height;
+      });
+      automatic.append(checkbox, el('span', '', 'Yükseklik içeriğe göre otomatik'));
+      group.append(fields, automatic); devices.append(group);
+    }
+    reset = button('Varsayılan boyuta dön', 'text-button', () => mutate(() => { delete section.layout; })); reset.disabled = !section.layout;
+    panel.body.append(devices, el('p', 'help-text', 'Genişlik %20–100, sabit yükseklik 200–6000 px olabilir. Serbest tasarımdaki nesneleri bölümün kendi Masaüstü/Mobil tuvalinde yerleştir. Burada varsayılan boyuta dönmek nesnelerini silmez.'), reset);
+    container.append(panel.container);
   }
   function renderBuilderSectionList(container, path, context) {
     const entries = get(path);
@@ -713,7 +830,7 @@
     toolbar.append(counts, add); container.append(toolbar);
     if (state.builderCatalog === context || !entries.length) {
       const catalog = el('div', 'builder-catalog'); catalog.setAttribute('aria-label', 'Yeni bölüm şablonu seç');
-      const names = { text: 'T', imageText: 'image', cards: 'grid', gallery: 'image', faq: 'help', cta: 'link' };
+      const names = { text: 'T', imageText: 'image', cards: 'grid', gallery: 'image', faq: 'help', cta: 'link', canvas: 'grid' };
       window.M3BUILDER.catalog.forEach((definition) => {
         const tile = button('', 'builder-template', () => {
           if (entries.length >= 40) { notify('Bir sayfada en çok 40 bölüm bulunabilir.'); return; }
@@ -735,6 +852,7 @@
       const definition = builtin ? window.M3BUILDER.builtinCatalog.find((item) => item.source === entry.source) : window.M3BUILDER.catalog.find((item) => item.kind === entry.kind);
       const title = builtin ? definition?.label || 'Hazır bölüm' : entry.title || definition?.label || 'Adsız bölüm';
       const row = el('div', `builder-block-row${entry.id === selected.id ? ' selected' : ''}${entry.visible ? '' : ' is-hidden'}`);
+      const handle = builderDragHandle(row, path, context, entry.id, title);
       const choice = button('', 'builder-block-choice', () => { state.builderSelection[context] = entry.id; renderSection(); }); choice.setAttribute('aria-pressed', String(entry.id === selected.id));
       const copy = el('span'); copy.append(el('strong', '', title), el('small', '', builtin ? 'Hazır site bölümü' : definition?.label || entry.kind));
       choice.append(el('span', 'builder-order', String(index + 1).padStart(2, '0')), copy);
@@ -747,6 +865,7 @@
         const duplicate = button('⧉', 'icon-button', () => {
           if (entries.length >= 40) { notify('Bir sayfada en çok 40 bölüm bulunabilir.'); return; }
           if (!builderCanAddSections()) return;
+          if (!builderCanCopyCanvas([entry])) return;
           const copy = builderCopySection(entry);
           mutate(() => { entries.splice(index + 1, 0, copy); state.builderSelection[context] = copy.id; });
         }); duplicate.setAttribute('aria-label', `${title}: bölümün kopyasını oluştur`);
@@ -754,7 +873,7 @@
         controls.append(duplicate, remove);
       }
       function move(direction) { mutate(() => { const destination = index + direction; [entries[index], entries[destination]] = [entries[destination], entries[index]]; }); }
-      row.append(choice, controls); list.append(row);
+      row.append(handle, choice, controls); list.append(row);
     });
     container.append(list);
     const index = entries.indexOf(selected);
@@ -765,16 +884,24 @@
       block.body.append(button('Bölüm içeriğini düzenle ↗', 'button button-secondary', () => goTo(sourceSection)));
       container.append(block.container);
     } else renderBuilderBlock(container, [...path, index], selected, context);
+    renderBuilderLayout(container, [...path, index], selected);
   }
   function renderBuilderBlock(container, path, section, context) {
     const definition = window.M3BUILDER.catalog.find((item) => item.kind === section.kind);
     const block = card(section.title || definition?.label || 'Bölüm içeriği', 'İçeriği ve görünümü düzenle. Metinler güvenli düz yazı olarak gösterilir; kod veya HTML gerekmez.');
     block.container.classList.add('builder-active-editor');
-    const type = field('Bölüm şablonu', [...path, 'kind'], { select: window.M3BUILDER.catalog.map((item) => [item.kind, item.label]), onInput: () => renderSection() });
+    const type = field('Bölüm şablonu', [...path, 'kind'], { select: window.M3BUILDER.catalog.map((item) => [item.kind, item.label]), onInput: (kind) => { if (kind === 'canvas' && !section.canvas) section.canvas = window.M3CANVAS.createCanvas(); renderSection(); } });
     block.body.append(type.wrapper);
     const grid = el('div', 'field-grid');
-    grid.append(field('Üst başlık', [...path, 'eyebrow'], { maxLength: 100 }).wrapper, field('Başlık', [...path, 'title'], { maxLength: 200 }).wrapper, field('Açıklama / metin', [...path, 'body'], { multiline: true, maxLength: 12000, rows: 5, help: 'Paragrafları yeni satırla ayırabilirsin.' }).wrapper);
+    grid.append(field('Üst başlık', [...path, 'eyebrow'], { maxLength: 100 }).wrapper, field('Başlık', [...path, 'title'], { maxLength: 200 }).wrapper);
+    if (section.kind !== 'canvas') grid.append(field('Açıklama / metin', [...path, 'body'], { multiline: true, maxLength: 12000, rows: 5, help: 'Paragrafları yeni satırla ayırabilirsin.' }).wrapper);
     block.body.append(grid);
+    if (section.kind === 'canvas') {
+      const host = el('div', 'builder-canvas-host'); block.body.append(host); container.append(block.container);
+      if (window.M3CANVAS_EDITOR) window.M3CANVAS_EDITOR.mount(host, { section, path, mutate, remember, changed, imageEditor, notify, getDocument: () => state.data, getSection: () => get(path) });
+      else host.append(el('p', 'section-note', 'Serbest tasarım aracı yüklenemedi. Sayfayı yeniden açıp tekrar dene.'));
+      return;
+    }
     if (['imageText', 'cta'].includes(section.kind)) block.body.append(el('span', 'field-label', section.kind === 'cta' ? 'Arka plan / bölüm görseli (isteğe bağlı)' : 'Bölüm görseli'), imageEditor('Bölüm görseli', [...path, 'image']));
     if (['cards', 'gallery', 'faq'].includes(section.kind)) renderBuilderItems(block.body, path, section);
     const buttonFields = el('div', 'field-grid');
@@ -926,6 +1053,13 @@
   }
 
   function previewPath() {
+    if (state.section === 'duzen') {
+      const selected = state.data?.builder?.home.find((item) => item.id === state.builderSelection.home);
+      if (selected) {
+        const hashes = { hero: 'anasayfa', start: 'baslangic', news: 'haberler', classes: 'siniflar', world: 'dunya', faq: 'destek', community: 'topluluk' };
+        return `/?preview=1#${selected.kind === 'builtin' ? hashes[selected.source] || 'anasayfa' : 'bolum-' + selected.id}`;
+      }
+    }
     if (state.section === 'sayfalar') {
       const page = state.data?.builder?.pages.find((item) => item.id === state.builderPageId);
       if (page) return `/?preview=1${window.M3BUILDER.pageHref(page)}`;
@@ -977,6 +1111,7 @@
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') { closeMenu(); if (state.previewOpen && matchMedia('(max-width: 900px)').matches) togglePreview(false); }
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') { event.preventDefault(); if (state.authorized) save(); }
+    if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === 'z' && !event.target?.closest?.('input,textarea,select,[contenteditable="true"]')) { event.preventDefault(); if (state.authorized) undo(); }
   });
   initialize();
 })();

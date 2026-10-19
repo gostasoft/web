@@ -17,7 +17,8 @@
     { kind: 'cards', label: 'Bilgi kartları', description: 'Özellikler, bağlantılar veya rehber kartları.' },
     { kind: 'gallery', label: 'Görsel galerisi', description: 'Ekran görüntüleri ve açıklamalı görseller.' },
     { kind: 'faq', label: 'Soru ve cevap', description: 'Açılır sorular ve yanıtlar.' },
-    { kind: 'cta', label: 'Duyuru ve buton', description: 'Öne çıkan bir mesaj ve yönlendirme butonu.' }
+    { kind: 'cta', label: 'Duyuru ve buton', description: 'Öne çıkan bir mesaj ve yönlendirme butonu.' },
+    { kind: 'canvas', label: 'Serbest tasarım', description: 'Metin, görsel, buton ve kutuları sürükleyip boyutlandır.' }
   ];
   function uid(prefix = 'block') {
     const suffix = globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -47,6 +48,7 @@
       items: []
     };
     if (kind === 'cta') section.button = { label: 'Hemen katıl', href: '#kayit' };
+    if (kind === 'canvas') section.canvas = window.M3CANVAS?.createCanvas() || { version: 1, desktop: { height: 800 }, mobile: { height: 1000 }, elements: [] };
     if (['cards', 'gallery', 'faq'].includes(kind)) {
       section.items.push({ id: uid('oge'), title: kind === 'faq' ? 'Sorunu buraya yaz' : 'İlk öğe', body: '', image: kind === 'gallery' ? artwork(doc) : emptyImage(), href: '' });
     }

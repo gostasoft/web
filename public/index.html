@@ -15,13 +15,16 @@
   <link rel="stylesheet" href="auth.css">
   <link rel="stylesheet" href="skin.css">
   <link rel="stylesheet" href="builder.css">
+  <link rel="stylesheet" href="canvas-renderer.css">
   <script src="content.js" defer></script>
   <script src="auth-config.js" defer></script>
   <script src="cms-defaults.js" defer></script>
   <script src="builder-model.js" defer></script>
+  <script src="canvas-model.js" defer></script>
   <script src="cms.js" defer></script>
   <script src="auth.js" defer></script>
   <script src="app.js" defer></script>
+  <script src="canvas-renderer.js" defer></script>
   <script src="builder.js" defer></script>
 </head>
 <body>
@@ -72,7 +75,7 @@
       <a class="scroll-hint" href="#haberler" aria-label="Haberler bölümüne ilerle"><span></span>KEŞFETMEYE DEVAM ET</a>
     </section>
 
-    <div class="wrap start-strip" data-builder-builtin="start" aria-label="Başlangıç adımları">
+    <div class="wrap start-strip" id="baslangic" data-builder-builtin="start" aria-label="Başlangıç adımları">
       <button class="start-item" data-modal="register"><span class="start-number">01</span><svg class="start-icon"><use href="#i-user"/></svg><span><strong data-cms-text="start.create.title">Hesabını Oluştur</strong><small data-cms-text="start.create.description">Yolculuğa ilk adım</small></span><svg class="icon"><use href="#i-chevron"/></svg></button>
       <button class="start-item" data-modal="download"><span class="start-number">02</span><svg class="start-icon"><use href="#i-download"/></svg><span><strong data-cms-text="start.download.title">Oyunu İndir</strong><small data-cms-text="start.download.description">Dünyaya açılan kapı</small></span><svg class="icon"><use href="#i-chevron"/></svg></button>
       <a class="start-item" href="#siniflar"><span class="start-number">03</span><svg class="start-icon"><use href="#i-sword"/></svg><span><strong data-cms-text="start.classes.title">Sınıfını Seç</strong><small data-cms-text="start.classes.description">Hikâyenin yüzünü bul</small></span><svg class="icon"><use href="#i-chevron"/></svg></a>
@@ -106,7 +109,7 @@
 
     <section class="support-section section-space wrap" id="destek" data-builder-builtin="faq" aria-labelledby="support-title"><div class="support-intro"><p class="eyebrow" data-cms-text="support.eyebrow">YOLCULUĞA HAZIR MISIN?</p><h2 id="support-title" data-cms-text="support.title" data-cms-lines>Aklındaki <br>sorular.</h2><p data-cms-text="support.description" data-cms-lines>İlk adımı atmadan önce <br>ihtiyaç duyduğun kısa bilgiler.</p><button class="text-link" data-modal="community"><span data-cms-text="support.cta">Yol arkadaşlarını bul</span><svg class="icon"><use href="#i-arrow"/></svg></button></div><div class="faq-list" id="faq-list"></div></section>
 
-    <section class="community-section" data-builder-builtin="community" aria-labelledby="community-title"><img data-cms-image="community.background" src="assets/world-village.webp" alt="" loading="lazy" width="1280" height="720"><div class="community-shade"></div><div class="wrap community-inner"><div><p class="eyebrow" data-cms-text="community.eyebrow">BİRLİKTE DAHA GÜÇLÜ</p><h2 id="community-title" data-cms-text="community.title">Efsaneler tek başına yazılmaz.</h2><p data-cms-text="community.description" data-cms-lines>Aynı tutkuyu paylaş. Yol arkadaşlarını bul.</p></div><button class="button primary" data-modal="community"><span data-cms-text="button.community">Topluluğa Katıl</span><svg class="icon"><use href="#i-arrow"/></svg></button></div></section>
+    <section class="community-section" id="topluluk" data-builder-builtin="community" aria-labelledby="community-title"><img data-cms-image="community.background" src="assets/world-village.webp" alt="" loading="lazy" width="1280" height="720"><div class="community-shade"></div><div class="wrap community-inner"><div><p class="eyebrow" data-cms-text="community.eyebrow">BİRLİKTE DAHA GÜÇLÜ</p><h2 id="community-title" data-cms-text="community.title">Efsaneler tek başına yazılmaz.</h2><p data-cms-text="community.description" data-cms-lines>Aynı tutkuyu paylaş. Yol arkadaşlarını bul.</p></div><button class="button primary" data-modal="community"><span data-cms-text="button.community">Topluluğa Katıl</span><svg class="icon"><use href="#i-arrow"/></svg></button></div></section>
   </main>
   <main id="auth-main" hidden></main>
   <main id="cms-page" hidden></main>

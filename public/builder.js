@@ -16,6 +16,7 @@
   let builder = null;
   let currentPage = null;
   let onPage = false;
+  let pendingAnchor = null;
 
   function node(tag, className, value) {
     const element = document.createElement(tag);
@@ -113,7 +114,35 @@
     return result;
   }
 
+  function applySectionLayout(element, layout) {
+    for (const viewport of ['desktop', 'mobile']) {
+      element.classList.remove('builder-layout-' + viewport, 'builder-layout-fixed-' + viewport);
+      for (const property of ['width', 'height', 'left', 'right']) {
+        element.style.removeProperty('--builder-layout-' + property + '-' + viewport);
+      }
+      const value = layout?.[viewport];
+      if (!value || typeof value !== 'object') continue;
+      const width = Number(value.width);
+      if (!Number.isFinite(width) || width < 20 || width > 100) continue;
+      element.classList.add('builder-layout-' + viewport);
+      element.style.setProperty('--builder-layout-width-' + viewport, Math.round(width) + '%');
+      const align = ['left', 'center', 'right'].includes(value.align) ? value.align : 'center';
+      element.style.setProperty('--builder-layout-left-' + viewport, align === 'left' ? '0px' : 'auto');
+      element.style.setProperty('--builder-layout-right-' + viewport, align === 'right' ? '0px' : 'auto');
+      const height = Number(value.height);
+      if (Number.isFinite(height) && height >= 200 && height <= 6000) {
+        element.classList.add('builder-layout-fixed-' + viewport);
+        element.style.setProperty('--builder-layout-height-' + viewport, Math.round(height) + 'px');
+      }
+    }
+  }
+
   function customSection(section) {
+    if (section.kind === 'canvas') {
+      const canvas = window.M3CANVAS_VIEW?.render(section);
+      if (canvas) applySectionLayout(canvas, section.layout);
+      return canvas || null;
+    }
     const allowed = new Set(['text', 'imageText', 'cards', 'gallery', 'faq', 'cta']);
     if (!allowed.has(section.kind)) return null;
     const style = section.style || {};
@@ -168,12 +197,14 @@
     }
     const title = result.querySelector('h2');
     if (title) { title.id = titleId; result.setAttribute('aria-labelledby', titleId); }
+    applySectionLayout(result, section.layout);
     return result;
   }
 
   function renderHome() {
+    window.M3CANVAS_VIEW?.disposeWithin(home);
     home.querySelectorAll(':scope > [data-builder-custom]').forEach(element => element.remove());
-    builtins.forEach(element => { element.hidden = true; });
+    builtins.forEach(element => { element.hidden = true; applySectionLayout(element); });
     const used = new Set();
     for (const section of builder.home) {
       if (section.kind === 'builtin') {
@@ -181,6 +212,7 @@
         if (!element || used.has(section.source)) continue;
         used.add(section.source);
         element.hidden = section.visible === false;
+        applySectionLayout(element, section.layout);
         home.append(element);
       } else if (section.visible !== false) {
         const element = customSection(section);
@@ -255,6 +287,7 @@
   }
 
   function renderPage(page) {
+    window.M3CANVAS_VIEW?.disposeWithin(pageMain);
     const fragment = document.createDocumentFragment();
     const header = node('header', 'builder-page-header wrap');
     const back = node('a', 'builder-page-back', '← Ana sayfaya dön');
@@ -277,6 +310,7 @@
   }
 
   function renderMissingPage() {
+    window.M3CANVAS_VIEW?.disposeWithin(pageMain);
     const content = node('section', 'builder-page-missing wrap');
     content.append(node('p', 'eyebrow', 'METIN3 DÜNYASI'));
     const heading = node('h1', '', 'Bu sayfa bulunamadı.');
@@ -315,15 +349,18 @@
         home.hidden = false;
         if (footer) footer.hidden = false;
         document.title = homeTitle;
-        if (leavingPage && focus && !window.M3CMS.preview) {
+        if (focus && (leavingPage || location.hash.startsWith('#bolum-'))) {
           requestAnimationFrame(() => {
-            const target = document.getElementById(location.hash.slice(1)) || home;
+            const anchor = document.getElementById(location.hash.slice(1));
+            pendingAnchor = !anchor && location.hash.startsWith('#bolum-') ? location.hash : null;
+            const target = anchor || home;
             if (!target.hidden) target.scrollIntoView({ behavior: 'instant', block: 'start' });
           });
         }
       }
     }
     updateCurrentLinks();
+    window.M3CANVAS_VIEW?.refresh();
   }
 
   function refresh() {
@@ -332,6 +369,7 @@
     renderHome();
     renderNavigation();
     route(false);
+    if (pendingAnchor === location.hash && document.getElementById(location.hash.slice(1))) route(true);
   }
 
   document.addEventListener('click', event => {

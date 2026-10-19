@@ -24,18 +24,31 @@ Soldaki sayfa listesinden düzenlenecek sayfayı seçebilirsin. **Kopyasını ol
 | **Görsel galerisi** | Ekran görüntülerinden oluşan bir galeri. Görsellere başlık, açıklama ve isteğe bağlı bağlantı eklenebilir. |
 | **Soru ve cevap** | Açılır soru ve yanıtlar. |
 | **Duyuru ve buton** | Öne çıkan mesaj, isteğe bağlı görsel ve yönlendirme butonu. |
+| **Serbest tasarım** | Yazı, görsel, buton ve kutuları tuvalde taşıma, boyutlandırma ve katmanlarla yerleştirme. Masaüstü ve mobil konumları ayrı hazırlanır. |
 
 Bölüm listesinden düzenlemek istediğin bölüme tıkla. Üst başlık, başlık ve açıklamayı; varsa görsel, kart veya soruları aşağıdaki düzenleyiciden değiştir. Bölümün şablonunu değiştirmek diğer alanlarda hazırladığın içeriği silmez; o şablonda kullanılmayan alanlar taslakta kalır.
 
-Her özel bölümde koyu siyah, bordo veya sayfa arka planı tonu; sola/ortaya hizalama ve dar/normal/geniş boşluk seçilebilir. Görsellerde dosya yükleme ve kadraj ayarları mevcut yönetim aracıyla aynıdır. Buton yazısı ve adresi isteğe bağlıdır. Metinler düz yazı olarak gösterilir; HTML, JavaScript veya CSS eklemek gerekmez.
+Hazır şablonlarda koyu siyah, bordo veya sayfa arka planı tonu; sola/ortaya hizalama ve dar/normal/geniş boşluk seçilebilir. Serbest tasarımda nesnelerin kendi konum, boyut, renk ve yazı ayarları vardır. Görsellerde dosya yükleme ve kadraj ayarları mevcut yönetim aracıyla aynıdır. Buton yazısı ve adresi isteğe bağlıdır. Metinler düz yazı olarak gösterilir; HTML, JavaScript veya CSS eklemek gerekmez.
 
-Oklar bölümleri ve öğeleri taşır. Kopyalama düğmesi bağımsız bir kopya oluşturur; çarpı düğmesi taslaktan kaldırır. **Görünür/Gizli**, içeriği silmeden ziyaretçi görünürlüğünü değiştirir. Bu düzenlemeler **Siteyi Kaydet** ile birlikte uygulanır.
+Soldaki noktalı tutamaç, bölümleri sürükleyerek taşır. Bırakılacak yer çizgiyle gösterilir. Ok düğmeleri de bölümleri ve öğeleri taşır; klavyeyle veya dokunmatik kullanımda bunları kullanabilirsin. Kopyalama düğmesi bağımsız bir kopya oluşturur; çarpı düğmesi taslaktan kaldırır. **Görünür/Gizli**, içeriği silmeden ziyaretçi görünürlüğünü değiştirir. Bu düzenlemeler **Siteyi Kaydet** ile birlikte uygulanır.
 
 ## Ana sayfa düzeni
 
 **Ana Sayfa Düzeni**, mevcut yedi site bölümünü ve sonradan eklediğin özel bölümleri gösterir. Hazır bölümler ana sahne, başlangıç adımları, haberler/hesap alanı, karakter sınıfları, dünya galerisi, sık sorulanlar ve topluluk çağrısıdır.
 
-Hazır bölümleri sıralayabilir veya gizleyebilirsin. İçeriklerini değiştirmek için seçili bölümde **Bölüm içeriğini düzenle** düğmesini kullan; ilgili mevcut içerik alanına geçersin. **Bölüm ekle** ile altı özel şablondan birini ana sayfaya yerleştirebilirsin. Yeni bölüm seçili bölümün arkasına eklenir.
+Hazır bölümleri sıralayabilir veya gizleyebilirsin. İçeriklerini değiştirmek için seçili bölümde **Bölüm içeriğini düzenle** düğmesini kullan; ilgili mevcut içerik alanına geçersin. **Bölüm ekle** ile yedi özel şablondan birini ana sayfaya yerleştirebilirsin. Yeni bölüm seçili bölümün arkasına eklenir; böylece mevcut bölümlerin arasına da serbest tasarım alanı koyabilirsin.
+
+Seçili her bölümün altındaki **Bölüm boyutu ve hizası** alanı hazır bölümlerde de kullanılabilir. Masaüstü ve mobil için genişliği yüzde, yüksekliği otomatik veya sabit piksel olarak seç; bölümün sola, ortaya veya sağa hizasını ayarla. Genişlik %20–100, sabit yükseklik 200–6000 px aralığındadır. **Varsayılan boyuta dön**, yalnızca bölüm boyutu ayarını kaldırır. Eski bölümler yalnızca görüntülendikleri için yeniden boyutlandırılmaz. Mevcut bölümlerin iç düzeni kendi tasarımını kullanır; serbest konumlandıracağın nesneleri **Serbest tasarım** bölümüne ekle.
+
+## Serbest tasarım tuvali
+
+**Serbest tasarım** bölümünü seçtikten sonra **Yazı**, **Görsel**, **Buton** veya **Kutu** ekle. Tuvalde veya **Katmanlar** listesinde nesneyi seç; sürükleyerek yerini değiştir ve sağ alt köşesinden boyutlandır. Sağdaki özellik alanından X/Y konumunu, genişlik ve yüksekliğini kesin piksel değerleriyle ayarlayabilirsin.
+
+Yazı ve buton metinleri; yazı boyutu, tipi, rengi ve kalınlığı; dolgu ve kenarlar özellik alanından düzenlenir. Görsel nesnesinde **Görsel yükle**, butonda **Tıklama bağlantısı** kullanılabilir. **Alan arka planı ve rengi**, bölümün arka planını düzenler. **Öne getir / Arkaya gönder** katman sırasını, **Konumu kilitle** taşıma ve boyutlandırmayı kontrol eder. **Öğeyi kaldır** seçili nesneyi siler.
+
+**Masaüstü tasarımı** 1200 px, **Mobil tasarımı** 390 px çalışma genişliği kullanır. Konum ve boyutlar iki cihaz için ayrı saklanır; mobil yerleşimini ayrıca incele. **Mobil düzeni otomatik oluştur**, görünür nesneleri mobilde alt alta dizer. **Izgarayı göster** ve **10 px ızgaraya hizala**, yerleştirmeyi kolaylaştırır.
+
+Seçili nesneyi ok tuşları 1 px, **Shift + ok** 10 px taşır; **Alt + ok** boyutlandırır. Boyutlandırma tutamacı odaktayken oklar doğrudan boyutu değiştirir. Üstteki **Geri al** veya metin alanı dışında **Ctrl+Z** son düzenlemeyi geri çevirir. Sonucu **Önizleme** ile kontrol et ve **Siteyi Kaydet** ile uygula. Daha ayrıntılı kullanım: [Serbest Tasarım kılavuzu](SERBEST_TASARIM.md).
 
 ## Menü
 
@@ -47,4 +60,4 @@ Hazır bölümleri sıralayabilir veya gizleyebilirsin. İçeriklerini değişti
 
 Önizleme kaydedilmemiş içeriği gösterir; ziyaretçilere uygulamaz. **Siteyi Kaydet**, sayfalar, ana sayfa düzeni, menü ve diğer site içeriğini birlikte sunucuya kaydeder. Hata veya başka bir oturumla çakışma olduğunda taslak açık sayfada tutulur ve eski sürüm yeni kaydın üzerine yazılmaz. Sayfayı kapatmadan önce kaydet veya **Yedek indir** kullan. Yedek, sayfa ve menü düzenini de içerir.
 
-En çok 30 özel sayfa, ana sayfada 40 bölüm, bir özel sayfada 40 bölüm, menüde 20 bağlantı ve bir bölümde 20 öğe bulunabilir. Ana sayfa ile tüm özel sayfalardaki bölümlerin toplamı en çok 200'dür. Mevcut oyun hesabı servislerinin durumu değişmez; sayfa düzenleyici oyuncu hesabı oluşturmaz veya oyun sunucusu yapılandırmaz.
+En çok 30 özel sayfa, ana sayfada 40 bölüm, bir özel sayfada 40 bölüm, menüde 20 bağlantı ve bir kart/galeri/soru bölümünde 20 öğe bulunabilir. Bir serbest tasarım alanı en çok 50 nesne; tüm site en çok 500 serbest nesne içerir. Ana sayfa ile tüm özel sayfalardaki bölümlerin toplamı en çok 200'dür. Mevcut oyun hesabı servislerinin durumu değişmez; sayfa düzenleyici oyuncu hesabı oluşturmaz veya oyun sunucusu yapılandırmaz.
