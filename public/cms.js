@@ -1,12 +1,14 @@
 'use strict';
 (function () {
   const defaults = window.M3CMS_DEFAULTS;
+  const homeTitle = document.title;
   let current = structuredClone(defaults);
-  const preview = new URLSearchParams(location.search).get('preview') === '1' && parent !== window;
+  const previewRequested = new URLSearchParams(location.search).get('preview') === '1' && parent !== window;
+  let preview = false;
 
   function merge(data) {
     const value = data && typeof data === 'object' ? data : {};
-    return {
+    const merged = {
       version: 1,
       texts: { ...defaults.texts, ...value.texts },
       images: { ...defaults.images, ...value.images },
@@ -17,6 +19,11 @@
         register: { ...defaults.auth.register, ...value.auth?.register }
       }
     };
+    // Legacy documents receive the same seven original sections and menus;
+    // saved layouts and pages remain authoritative when a builder is present.
+    if (window.M3BUILDER) merged.builder = window.M3BUILDER.normalize(value.builder, merged);
+    else if (value.builder) merged.builder = structuredClone(value.builder);
+    return merged;
   }
 
   function text(key, fallback) { return current.texts[key] ?? fallback ?? ''; }
@@ -57,24 +64,40 @@
       window.M3AUTH?.refresh();
       refreshDOM();
     }
+    // Only apply() notifies the renderer. refreshDOM() is also called by the
+    // legacy app refresh, so keeping this separate prevents recursive renders.
+    window.M3BUILDER_VIEW?.refresh();
   }
 
-  window.M3CMS = { text, image, link, refreshDOM, get document() { return current; } };
+  window.M3CMS = { text, image, link, refreshDOM, homeTitle, get document() { return current; }, get preview() { return preview; } };
   window.M3CMS_READY = (async () => {
     let data = null;
-    try {
-      const response = await fetch('/api/site', { cache: 'no-store', credentials: 'same-origin' });
-      if (response.ok) data = (await response.json()).data;
-    } catch (_) { /* Bundled defaults remain readable during network failures. */ }
+    await Promise.all([
+      (async () => {
+        try {
+          const response = await fetch('/api/site', { cache: 'no-store', credentials: 'same-origin' });
+          if (response.ok) data = (await response.json()).data;
+        } catch (_) { /* Bundled defaults remain readable during network failures. */ }
+      })(),
+      (async () => {
+        if (!previewRequested) return;
+        try {
+          const response = await fetch('/api/admin/session', { cache: 'no-store', credentials: 'same-origin' });
+          preview = response.ok && (await response.json()).authorized === true;
+        } catch (_) { /* Query parameters alone never authorize draft content. */ }
+      })()
+    ]);
     apply(data, false);
   })();
 
-  if (preview) {
+  if (previewRequested) {
     window.addEventListener('message', event => {
-      if (event.source !== parent || event.origin !== location.origin || event.data?.type !== 'm3-cms-preview') return;
+      if (!preview || event.source !== parent || event.origin !== location.origin || event.data?.type !== 'm3-cms-preview') return;
       try { apply(event.data.data, true); } catch (_) { /* Keep the last valid preview while a field is incomplete. */ }
     });
-    window.M3CMS_READY.then(() => requestAnimationFrame(() => parent.postMessage({ type: 'm3-cms-ready' }, location.origin)));
+    window.M3CMS_READY.then(() => {
+      if (preview) requestAnimationFrame(() => parent.postMessage({ type: 'm3-cms-ready' }, location.origin));
+    });
   }
 
 })();

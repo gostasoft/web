@@ -4,6 +4,9 @@
   const $ = (id) => document.getElementById(id);
   const clone = (value) => JSON.parse(JSON.stringify(value));
   const sections = [
+    { id: 'sayfalar', label: 'Sayfalar', title: 'Her fikre yeni bir sayfa.', description: 'Kurallar, rehberler ve tanıtımlar için sayfalar oluştur; hazır bölümlerle içeriğini tasarla.', icon: 'news' },
+    { id: 'duzen', label: 'Ana Sayfa Düzeni', title: 'Dünyanı yeniden düzenle.', description: 'Ana sayfanın bölümlerini sırala, göster veya gizle. Kendi içerik bölümlerini ekle.', icon: 'grid' },
+    { id: 'menu', label: 'Menü', title: 'Yolunu sen belirle.', description: 'Menü bağlantılarını düzenle, sırala ve oluşturduğun sayfalara kısayol ekle.', icon: 'link' },
     { id: 'genel', label: 'Genel & Metinler', title: 'Dünyanı yönet.', description: 'Menülerden ana sayfaya, sitenin bütün metinlerini tek yerden düzenle.', icon: 'grid' },
     { id: 'gorseller', label: 'Görseller', title: 'Hikâyene bir yüz ver.', description: 'Logonu, ana sahneyi ve arka planları değiştir. Her görselin kadrajını ayrı ayarla.', icon: 'image' },
     { id: 'haberler', label: 'Haberler', title: 'Yeni bir haberin var.', description: 'Duyurularını ve rehberlerini hazırla; kartlarını istediğin sıraya getir.', icon: 'news', collection: 'news' },
@@ -23,7 +26,7 @@
     account: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
     link: '<path d="m10 13 4-4M8 16l-1 1a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0M16 8l1-1a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0" transform="translate(0 -1)"/>',
   };
-  const state = { data: null, saved: null, revision: null, dirty: false, saving: false, loggingOut: false, uploads: 0, history: [], section: 'genel', authMode: 'login', previewOpen: false, previewLoaded: false, previewTimer: null, toastTimer: null, authorized: false, expanded: new Set(), filter: '' };
+  const state = { data: null, saved: null, revision: null, dirty: false, saving: false, loggingOut: false, uploads: 0, history: [], section: 'genel', authMode: 'login', previewOpen: false, previewLoaded: false, previewTimer: null, toastTimer: null, authorized: false, expanded: new Set(), filter: '', builderPageId: null, builderSelection: {}, builderCatalog: null };
   let fieldIndex = 0;
 
   function el(tag, className, text) {
@@ -71,7 +74,7 @@
     state.dirty = JSON.stringify(state.data) !== state.saved;
     updateStatus();
     clearTimeout(state.previewTimer);
-    state.previewTimer = setTimeout(sendPreview, 250);
+    state.previewTimer = setTimeout(() => { if (state.previewOpen && state.section === 'sayfalar') loadPreview(); else sendPreview(); }, 250);
   }
   function mutate(fn, rerender = true) {
     remember();
@@ -129,6 +132,8 @@
     doc.auth ||= {};
     doc.auth.login ||= { eyebrow: '', title: '', description: '' };
     doc.auth.register ||= { eyebrow: '', title: '', description: '' };
+    if (!window.M3BUILDER) throw new Error('Sayfa düzenleyici yüklenemedi. Sayfayı yeniden aç.');
+    doc.builder = window.M3BUILDER.normalize(doc.builder, doc);
     return doc;
   }
   function accessError(error) {
@@ -204,12 +209,18 @@
   function renderSummary() {
     const container = $('summary-grid');
     container.replaceChildren();
-    [
+    const items = ['sayfalar', 'duzen', 'menu'].includes(state.section) ? [
+      ['Özel sayfa', state.data.builder.pages.length, 'news'],
+      ['Ana sayfa bölümü', state.data.builder.home.length, 'grid'],
+      ['Menü bağlantısı', state.data.builder.navigation.length, 'link'],
+      ['Toplam bölüm', builderSectionCount(), 'world'],
+    ] : [
       ['Haber & duyuru', state.data.content.news.length, 'news'],
       ['Karakter sınıfı', state.data.content.classes.length, 'sword'],
       ['Dünya sahnesi', state.data.content.worlds.length, 'world'],
       ['Kayıtlı görsel alanı', Object.keys(state.data.images).length, 'image'],
-    ].forEach(([label, count, iconName]) => {
+    ];
+    items.forEach(([label, count, iconName]) => {
       const card = el('div', 'summary-card');
       card.append(el('span', '', label), el('strong', '', String(count).padStart(2, '0')), icon(iconName));
       container.append(card);
@@ -271,18 +282,25 @@
     container.replaceChildren();
     renderSummary();
     if (section.collection) renderCollection(section.collection, container);
+    else if (section.id === 'sayfalar') renderBuilderPages(container);
+    else if (section.id === 'duzen') renderBuilderHome(container);
+    else if (section.id === 'menu') renderBuilderMenu(container);
     else if (section.id === 'genel') renderTexts(container);
     else if (section.id === 'gorseller') renderImages(container);
     else if (section.id === 'hesap') renderAuth(container);
     else if (section.id === 'baglantilar') renderLinks(container);
     updateStatus();
+    if (state.previewOpen && state.section === 'sayfalar') loadPreview();
   }
   function renderTexts(container) {
+    const menuNote = el('div', 'section-note');
+    menuNote.append(document.createTextNode('Gezinme menüsünün yazılarını ve bağlantılarını Menü bölümünden düzenleyebilirsin. '), button('Menüyü düzenle ↗', 'text-button', () => goTo('menu')));
+    container.append(menuNote);
     const declared = fieldsDeclarations('texts');
     const fields = declared.length ? declared : Object.keys(state.data.texts).map((key) => ({ key, label: key, group: 'Site metinleri', multiline: /title|description|note|caption/.test(key) }));
     const groups = new Map();
     fields.forEach((definition) => {
-      if (/^auth\./.test(definition.key)) return;
+      if (/^(?:auth|nav)\./.test(definition.key)) return;
       const name = definition.group || 'Site metinleri';
       if (!groups.has(name)) groups.set(name, []);
       groups.get(name).push(definition);
@@ -395,11 +413,13 @@
       state.uploads++; updateStatus(); upload.disabled = true; status.textContent = 'Görsel sunucuya yükleniyor…';
       const originalPathValue = clone(get(path) ?? null);
       const originalDoc = state.data;
+      const ownerPath = path.slice(0, -1);
+      const originalOwnerId = get(ownerPath)?.id;
       try {
         const form = new FormData(); form.append('file', file);
         const result = await api('/api/admin/upload', { method: 'POST', body: form });
         if (!result.url || !safeImageSrc(result.url)) throw new Error('Sunucu geçerli bir görsel adresi döndürmedi.');
-        if (state.data !== originalDoc || JSON.stringify(get(path) ?? null) !== JSON.stringify(originalPathValue)) {
+        if (state.data !== originalDoc || (originalOwnerId && get(ownerPath)?.id !== originalOwnerId) || JSON.stringify(get(path) ?? null) !== JSON.stringify(originalPathValue)) {
           notify('Yükleme sırasında alan değişti; yanlış görsele uygulanmaması için tekrar yükleyebilirsin.');
           status.textContent = 'Alan değişti; görsel taslağa eklenmedi.';
           return;
@@ -552,6 +572,280 @@
     if (!definitions.length) container.append(el('p', 'section-note', 'Bu sürüm için henüz bağlantı alanı tanımlanmamış.'));
   }
 
+  function builderSectionCount() {
+    const builder = state.data.builder;
+    return builder.home.length + builder.pages.reduce((total, page) => total + page.sections.length, 0);
+  }
+  function builderCanAddSections(amount = 1) {
+    if (builderSectionCount() + amount <= 200) return true;
+    notify('Site genelinde en çok 200 bölüm bulunabilir. Önce kullanmadığın bir bölümü kaldır.');
+    return false;
+  }
+  function builderPageSlug(value, exceptId) {
+    const base = window.M3BUILDER.slugify(value);
+    const used = new Set(state.data.builder.pages.filter((page) => page.id !== exceptId).map((page) => page.slug));
+    let candidate = base;
+    let suffix = 2;
+    while (used.has(candidate)) {
+      const ending = `-${suffix++}`;
+      candidate = base.slice(0, 60 - ending.length).replace(/-+$/, '') + ending;
+    }
+    return candidate;
+  }
+  function builderLinkPageSlug(href) {
+    try {
+      const url = new URL(href, location.origin + '/');
+      if (url.origin !== location.origin || !url.hash.startsWith('#sayfa/')) return null;
+      return decodeURIComponent(url.hash.slice(7));
+    } catch { return null; }
+  }
+  function builderMovePageLinks(previousSlug, nextSlug) {
+    state.data.builder.navigation.forEach((entry) => {
+      if (builderLinkPageSlug(entry.href) === previousSlug) entry.href = entry.href.slice(0, entry.href.indexOf('#')) + '#sayfa/' + nextSlug;
+    });
+  }
+  function builderCopySection(section) {
+    const duplicate = clone(section);
+    duplicate.id = window.M3BUILDER.uid('bolum');
+    duplicate.items = duplicate.items.map((item) => ({ ...item, id: window.M3BUILDER.uid('oge') }));
+    return duplicate;
+  }
+  function builderToggle(label, path, help = '', callback) {
+    const wrapper = el('label', 'builder-toggle');
+    const input = el('input'); input.type = 'checkbox'; input.checked = get(path) === true; input.name = path.join('.');
+    const copy = el('span'); copy.append(el('strong', '', label));
+    if (help) copy.append(el('small', '', help));
+    input.addEventListener('change', () => mutate(() => { set(path, input.checked); if (callback) callback(input.checked); }));
+    wrapper.append(input, copy);
+    return wrapper;
+  }
+  function builderEmpty(title, description, actionLabel, action) {
+    const box = el('div', 'builder-empty');
+    box.append(el('span', 'builder-empty-mark', '＋'), el('h2', '', title), el('p', '', description));
+    if (action) box.append(button(actionLabel, 'button button-primary', action));
+    return box;
+  }
+  function builderBadge(text, active = false) { return el('span', `builder-badge${active ? ' is-live' : ''}`, text); }
+  function builderAddToMenu(page) {
+    const href = window.M3BUILDER.pageHref(page);
+    if (state.data.builder.navigation.some((item) => builderLinkPageSlug(item.href) === page.slug)) { notify('Bu sayfanın menü bağlantısı zaten var. Menü bölümünden düzenleyebilirsin.'); return; }
+    if (state.data.builder.navigation.length >= 20) { notify('Menüde en çok 20 bağlantı bulunabilir.'); return; }
+    mutate(() => state.data.builder.navigation.push({ id: window.M3BUILDER.uid('menu'), label: (page.title || 'Yeni sayfa').slice(0, 80), href, visible: true }));
+    notify(page.published ? 'Sayfa menü taslağına eklendi. Siteyi Kaydet ile uygula.' : 'Kısayol menü taslağına eklendi; sayfa yayımlanana kadar ziyaretçilere gösterilmez.');
+  }
+  function builderNewPage() {
+    if (state.data.builder.pages.length >= 30) { notify('En çok 30 özel sayfa oluşturabilirsin.'); return; }
+    const page = window.M3BUILDER.createPage(state.data);
+    if (!builderCanAddSections(page.sections.length)) return;
+    page.slug = builderPageSlug(page.slug);
+    mutate(() => { state.data.builder.pages.push(page); state.builderPageId = page.id; state.builderCatalog = null; });
+    if (state.previewOpen) loadPreview();
+    notify('Yeni sayfa taslak olarak oluşturuldu. Hazır olduğunda yayına açıp kaydet.');
+  }
+  function renderBuilderPages(container) {
+    const pages = state.data.builder.pages;
+    const toolbar = el('div', 'collection-toolbar');
+    toolbar.append(el('p', '', `${pages.length} / 30 sayfa · Yeni sayfalar önce taslak olarak oluşturulur.`), button('＋ Yeni sayfa', 'button button-secondary', builderNewPage));
+    container.append(toolbar);
+    if (!pages.length) { container.append(builderEmpty('İlk sayfanı oluştur.', 'Oyun kuralları, sunucu özellikleri veya bir başlangıç rehberi. Başlıklarını yaz, görsellerini seç; kod gerekmez.', 'Yeni sayfa oluştur', builderNewPage)); return; }
+    let page = pages.find((item) => item.id === state.builderPageId);
+    if (!page) { page = pages[0]; state.builderPageId = page.id; }
+    const index = pages.indexOf(page);
+    const layout = el('div', 'builder-pages-layout');
+    const pageList = el('nav', 'builder-page-list'); pageList.setAttribute('aria-label', 'Düzenlenecek sayfa');
+    let currentListTitle;
+    let currentListSlug;
+    pages.forEach((entry) => {
+      const selected = entry.id === page.id;
+      const choice = button('', `builder-page-choice${selected ? ' active' : ''}`, () => { state.builderPageId = entry.id; state.builderCatalog = null; renderSection(); if (state.previewOpen) loadPreview(); });
+      choice.setAttribute('aria-pressed', String(selected));
+      const label = el('strong', '', entry.title || 'Adsız sayfa');
+      const slug = el('small', '', window.M3BUILDER.pageHref(entry));
+      choice.append(label, slug, builderBadge(entry.published ? 'Yayında' : 'Taslak', entry.published));
+      if (selected) { currentListTitle = label; currentListSlug = slug; }
+      pageList.append(choice);
+    });
+    const editor = el('div', 'builder-page-editor');
+    const settings = card('Sayfa ayarları', 'Sayfa adresi, başlığı ve yayındaki durumu.', 1);
+    const grid = el('div', 'field-grid');
+    grid.append(field('Sayfa başlığı', ['builder', 'pages', index, 'title'], { maxLength: 200, onInput: (value) => { currentListTitle.textContent = value || 'Adsız sayfa'; } }).wrapper);
+    let previousSlug = page.slug;
+    const slug = field('Sayfa adresi', ['builder', 'pages', index, 'slug'], { maxLength: 60, help: 'Kısa bir adres kullan. Türkçe harfler ve boşluklar uygun biçime çevrilir.', placeholder: 'oyun-kurallari', onInput: (value) => {
+      const normalized = builderPageSlug(value, page.id);
+      page.slug = normalized;
+      builderMovePageLinks(previousSlug, normalized);
+      previousSlug = normalized;
+      currentListSlug.textContent = '#sayfa/' + normalized;
+    } });
+    slug.input.addEventListener('change', () => { slug.input.value = page.slug; if (state.previewOpen) loadPreview(); });
+    grid.append(slug.wrapper, field('Kısa açıklama', ['builder', 'pages', index, 'description'], { multiline: true, maxLength: 12000, help: 'Sayfanın ne anlattığını birkaç cümleyle özetle.' }).wrapper);
+    settings.body.append(grid, builderToggle('Sayfayı yayına aç', ['builder', 'pages', index, 'published'], 'Kapalıyken yalnızca yönetici önizlemesinde görünür. Sonuç Siteyi Kaydet ile uygulanır.'));
+    const actions = el('div', 'builder-page-actions');
+    actions.append(button('Menüye ekle', 'button button-secondary', () => builderAddToMenu(page)), button('Önizle', 'button button-secondary', () => { togglePreview(true); loadPreview(); }));
+    actions.append(button('Kopyasını oluştur', 'text-button', () => {
+      if (pages.length >= 30) { notify('En çok 30 özel sayfa oluşturabilirsin.'); return; }
+      if (!builderCanAddSections(page.sections.length)) return;
+      const copy = clone(page); copy.id = window.M3BUILDER.uid('sayfa'); copy.title = (page.title + ' (kopya)').slice(0, 200); copy.slug = builderPageSlug(page.slug + '-kopya'); copy.published = false; copy.sections = page.sections.map(builderCopySection);
+      mutate(() => { pages.push(copy); state.builderPageId = copy.id; });
+      if (state.previewOpen) loadPreview();
+    }));
+    actions.append(button('Sayfayı kaldır', 'text-button builder-danger', () => {
+      mutate(() => { pages.splice(index, 1); state.data.builder.navigation = state.data.builder.navigation.filter((item) => builderLinkPageSlug(item.href) !== page.slug); state.builderPageId = pages[Math.min(index, pages.length - 1)]?.id || null; });
+      if (state.previewOpen) loadPreview();
+      notify('Sayfa ve ona ait menü kısayolları taslaktan kaldırıldı. Geri al ile geri getirebilirsin.');
+    }));
+    settings.body.append(actions); editor.append(settings.container);
+    if (!page.published) editor.append(el('p', 'section-note', 'Bu sayfa taslak. Önizlemede inceleyebilirsin; ziyaretçilerin görmesi için “Sayfayı yayına aç” seçeneğini etkinleştirip Siteyi Kaydet düğmesine bas. Menü kısayolunu şimdiden hazırlayabilirsin.'));
+    renderBuilderSectionList(editor, ['builder', 'pages', index, 'sections'], page.id);
+    layout.append(pageList, editor); container.append(layout);
+  }
+  function renderBuilderHome(container) {
+    const note = el('p', 'section-note');
+    note.append(el('strong', '', 'Sıra ve görünürlük senin elinde. '), document.createTextNode('Hazır bölümleri oklarla taşıyabilir veya gizleyebilirsin. Kendi bölümlerini ekleyip içerik ve görünüm ayarlarını aşağıdan düzenle. Kaydedilene kadar ziyaretçiler etkilenmez.'));
+    container.append(note);
+    renderBuilderSectionList(container, ['builder', 'home'], 'home');
+  }
+  function renderBuilderSectionList(container, path, context) {
+    const entries = get(path);
+    const toolbar = el('div', 'builder-section-toolbar');
+    const counts = el('div'); counts.append(el('h2', '', context === 'home' ? 'Ana sayfa bölümleri' : 'Sayfa bölümleri'), el('p', '', `${entries.length} / 40 bölüm · Site toplamı ${builderSectionCount()} / 200`));
+    const add = button('＋ Bölüm ekle', 'button button-secondary', () => { state.builderCatalog = state.builderCatalog === context ? null : context; renderSection(); }); add.setAttribute('aria-expanded', String(state.builderCatalog === context || !entries.length));
+    toolbar.append(counts, add); container.append(toolbar);
+    if (state.builderCatalog === context || !entries.length) {
+      const catalog = el('div', 'builder-catalog'); catalog.setAttribute('aria-label', 'Yeni bölüm şablonu seç');
+      const names = { text: 'T', imageText: 'image', cards: 'grid', gallery: 'image', faq: 'help', cta: 'link' };
+      window.M3BUILDER.catalog.forEach((definition) => {
+        const tile = button('', 'builder-template', () => {
+          if (entries.length >= 40) { notify('Bir sayfada en çok 40 bölüm bulunabilir.'); return; }
+          if (!builderCanAddSections()) return;
+          const block = window.M3BUILDER.createSection(definition.kind, state.data);
+          mutate(() => { const selected = entries.findIndex((item) => item.id === state.builderSelection[context]); entries.splice(selected < 0 ? entries.length : selected + 1, 0, block); state.builderSelection[context] = block.id; state.builderCatalog = null; });
+        });
+        const mark = el('span', 'builder-template-mark');
+        mark.append(definition.kind === 'text' ? document.createTextNode('T') : icon(names[definition.kind]));
+        tile.append(mark, el('strong', '', definition.label), el('small', '', definition.description)); catalog.append(tile);
+      }); container.append(catalog);
+    }
+    if (!entries.length) { container.append(el('p', 'builder-list-empty', 'Bu sayfada henüz bölüm yok. Yukarıdaki şablonlardan birini seçerek başla.')); return; }
+    let selected = entries.find((entry) => entry.id === state.builderSelection[context]);
+    if (!selected) { selected = entries[0]; state.builderSelection[context] = selected.id; }
+    const list = el('div', 'builder-block-list'); list.setAttribute('aria-label', 'Bölüm sırası');
+    entries.forEach((entry, index) => {
+      const builtin = entry.kind === 'builtin';
+      const definition = builtin ? window.M3BUILDER.builtinCatalog.find((item) => item.source === entry.source) : window.M3BUILDER.catalog.find((item) => item.kind === entry.kind);
+      const title = builtin ? definition?.label || 'Hazır bölüm' : entry.title || definition?.label || 'Adsız bölüm';
+      const row = el('div', `builder-block-row${entry.id === selected.id ? ' selected' : ''}${entry.visible ? '' : ' is-hidden'}`);
+      const choice = button('', 'builder-block-choice', () => { state.builderSelection[context] = entry.id; renderSection(); }); choice.setAttribute('aria-pressed', String(entry.id === selected.id));
+      const copy = el('span'); copy.append(el('strong', '', title), el('small', '', builtin ? 'Hazır site bölümü' : definition?.label || entry.kind));
+      choice.append(el('span', 'builder-order', String(index + 1).padStart(2, '0')), copy);
+      const controls = el('div', 'builder-row-actions');
+      const visible = button(entry.visible ? 'Görünür' : 'Gizli', `builder-visibility${entry.visible ? ' active' : ''}`, () => mutate(() => { entry.visible = !entry.visible; })); visible.setAttribute('role', 'switch'); visible.setAttribute('aria-checked', String(entry.visible)); visible.setAttribute('aria-label', `${title}: sitede göster`);
+      const up = button('↑', 'icon-button', () => move(-1)); up.disabled = index === 0; up.setAttribute('aria-label', `${title}: yukarı taşı`);
+      const down = button('↓', 'icon-button', () => move(1)); down.disabled = index === entries.length - 1; down.setAttribute('aria-label', `${title}: aşağı taşı`);
+      controls.append(visible, up, down);
+      if (!builtin) {
+        const duplicate = button('⧉', 'icon-button', () => {
+          if (entries.length >= 40) { notify('Bir sayfada en çok 40 bölüm bulunabilir.'); return; }
+          if (!builderCanAddSections()) return;
+          const copy = builderCopySection(entry);
+          mutate(() => { entries.splice(index + 1, 0, copy); state.builderSelection[context] = copy.id; });
+        }); duplicate.setAttribute('aria-label', `${title}: bölümün kopyasını oluştur`);
+        const remove = button('×', 'icon-button remove-button', () => { mutate(() => { entries.splice(index, 1); state.builderSelection[context] = entries[Math.min(index, entries.length - 1)]?.id || null; }); notify('Bölüm taslaktan kaldırıldı. Geri al ile geri getirebilirsin.'); }); remove.setAttribute('aria-label', `${title}: bölümü kaldır`);
+        controls.append(duplicate, remove);
+      }
+      function move(direction) { mutate(() => { const destination = index + direction; [entries[index], entries[destination]] = [entries[destination], entries[index]]; }); }
+      row.append(choice, controls); list.append(row);
+    });
+    container.append(list);
+    const index = entries.indexOf(selected);
+    if (selected.kind === 'builtin') {
+      const definition = window.M3BUILDER.builtinCatalog.find((item) => item.source === selected.source);
+      const block = card(definition?.label || 'Hazır bölüm', 'Bu bölüm sitenin mevcut içerik alanlarını kullanır. Buradan sırasını ve görünürlüğünü yönetebilirsin.');
+      const sourceSection = { hero: 'genel', start: 'genel', news: 'haberler', classes: 'siniflar', world: 'dunya', faq: 'sorular', community: 'genel' }[selected.source] || 'genel';
+      block.body.append(button('Bölüm içeriğini düzenle ↗', 'button button-secondary', () => goTo(sourceSection)));
+      container.append(block.container);
+    } else renderBuilderBlock(container, [...path, index], selected, context);
+  }
+  function renderBuilderBlock(container, path, section, context) {
+    const definition = window.M3BUILDER.catalog.find((item) => item.kind === section.kind);
+    const block = card(section.title || definition?.label || 'Bölüm içeriği', 'İçeriği ve görünümü düzenle. Metinler güvenli düz yazı olarak gösterilir; kod veya HTML gerekmez.');
+    block.container.classList.add('builder-active-editor');
+    const type = field('Bölüm şablonu', [...path, 'kind'], { select: window.M3BUILDER.catalog.map((item) => [item.kind, item.label]), onInput: () => renderSection() });
+    block.body.append(type.wrapper);
+    const grid = el('div', 'field-grid');
+    grid.append(field('Üst başlık', [...path, 'eyebrow'], { maxLength: 100 }).wrapper, field('Başlık', [...path, 'title'], { maxLength: 200 }).wrapper, field('Açıklama / metin', [...path, 'body'], { multiline: true, maxLength: 12000, rows: 5, help: 'Paragrafları yeni satırla ayırabilirsin.' }).wrapper);
+    block.body.append(grid);
+    if (['imageText', 'cta'].includes(section.kind)) block.body.append(el('span', 'field-label', section.kind === 'cta' ? 'Arka plan / bölüm görseli (isteğe bağlı)' : 'Bölüm görseli'), imageEditor('Bölüm görseli', [...path, 'image']));
+    if (['cards', 'gallery', 'faq'].includes(section.kind)) renderBuilderItems(block.body, path, section);
+    const buttonFields = el('div', 'field-grid');
+    buttonFields.append(field('Buton yazısı (isteğe bağlı)', [...path, 'button', 'label'], { maxLength: 80, placeholder: 'Örneğin: Detayları incele' }).wrapper, field('Buton bağlantısı', [...path, 'button', 'href'], { maxLength: 2048, placeholder: '#kayit veya https://…', help: 'Buton yazısı ve bağlantısı boşsa buton gösterilmez.' }).wrapper);
+    block.body.append(el('span', 'builder-subheading', 'Yönlendirme butonu'), buttonFields);
+    const style = el('div', 'field-grid builder-style-grid');
+    style.append(field('Renk tonu', [...path, 'style', 'tone'], { select: [['dark', 'Koyu siyah'], ['burgundy', 'Bordo'], ['transparent', 'Sayfa arka planı']] }).wrapper,
+      field('Metin hizası', [...path, 'style', 'align'], { select: [['left', 'Sola hizalı'], ['center', 'Ortalanmış']] }).wrapper,
+      field('Bölüm boşluğu', [...path, 'style', 'spacing'], { select: [['compact', 'Dar'], ['normal', 'Normal'], ['wide', 'Geniş']] }).wrapper);
+    if (section.kind === 'imageText') style.append(field('Görselin konumu', [...path, 'style', 'imageSide'], { select: [['left', 'Görsel solda'], ['right', 'Görsel sağda']] }).wrapper);
+    block.body.append(el('span', 'builder-subheading', 'Görünüm'), style);
+    container.append(block.container);
+  }
+  function renderBuilderItems(container, sectionPath, section) {
+    const faq = section.kind === 'faq';
+    const title = faq ? 'Sorular ve yanıtlar' : section.kind === 'gallery' ? 'Galeri görselleri' : 'Bilgi kartları';
+    const toolbar = el('div', 'builder-section-toolbar');
+    toolbar.append(el('h3', '', `${title} · ${section.items.length} / 20`), button(faq ? '＋ Soru ekle' : section.kind === 'gallery' ? '＋ Görsel ekle' : '＋ Kart ekle', 'button button-secondary', () => {
+      if (section.items.length >= 20) { notify('Bir bölümde en çok 20 öğe bulunabilir.'); return; }
+      mutate(() => section.items.push({ id: window.M3BUILDER.uid('oge'), title: faq ? 'Yeni soru' : 'Yeni öğe', body: '', image: { src: '', x: 50, y: 50, fit: 'cover' }, href: '' }));
+    })); container.append(toolbar);
+    if (!section.items.length) container.append(el('p', 'builder-list-empty', faq ? 'İlk sorunu ekleyerek başla.' : 'Bu bölüm henüz boş. İlk öğeyi ekleyebilirsin.'));
+    section.items.forEach((item, index) => {
+      const path = [...sectionPath, 'items', index];
+      const box = el('div', 'builder-item-editor');
+      const top = el('div', 'builder-item-heading'); top.append(el('strong', '', `${String(index + 1).padStart(2, '0')} · ${item.title || (faq ? 'Soru' : 'Öğe')}`));
+      const actions = el('div', 'builder-row-actions');
+      const up = button('↑', 'icon-button', () => move(-1)); up.disabled = index === 0; up.setAttribute('aria-label', `${index + 1}. öğeyi yukarı taşı`);
+      const down = button('↓', 'icon-button', () => move(1)); down.disabled = index === section.items.length - 1; down.setAttribute('aria-label', `${index + 1}. öğeyi aşağı taşı`);
+      const copy = button('⧉', 'icon-button', () => { if (section.items.length >= 20) { notify('Bir bölümde en çok 20 öğe bulunabilir.'); return; } mutate(() => { const duplicate = clone(item); duplicate.id = window.M3BUILDER.uid('oge'); section.items.splice(index + 1, 0, duplicate); }); }); copy.setAttribute('aria-label', `${index + 1}. öğenin kopyasını oluştur`);
+      const remove = button('×', 'icon-button remove-button', () => mutate(() => section.items.splice(index, 1))); remove.setAttribute('aria-label', `${index + 1}. öğeyi kaldır`);
+      actions.append(up, down, copy, remove); top.append(actions);
+      const fields = el('div', 'field-grid'); fields.append(field(faq ? 'Soru' : 'Başlık', [...path, 'title'], { maxLength: 200 }).wrapper, field(faq ? 'Yanıt' : 'Açıklama', [...path, 'body'], { multiline: true, maxLength: 12000 }).wrapper);
+      box.append(top, fields);
+      if (!faq) box.append(imageEditor('Öğe görseli', [...path, 'image']), field('Bağlantı (isteğe bağlı)', [...path, 'href'], { maxLength: 2048, placeholder: '#sayfa/rehber veya https://…' }).wrapper);
+      container.append(box);
+      function move(direction) { mutate(() => { const destination = index + direction; [section.items[index], section.items[destination]] = [section.items[destination], section.items[index]]; }); }
+    });
+  }
+  function renderBuilderMenu(container) {
+    const entries = state.data.builder.navigation;
+    const toolbar = el('div', 'collection-toolbar');
+    toolbar.append(el('p', '', `${entries.length} / 20 menü bağlantısı · Sıra, masaüstü ve mobil menülere birlikte uygulanır.`), button('＋ Bağlantı ekle', 'button button-secondary', () => {
+      if (entries.length >= 20) { notify('Menüde en çok 20 bağlantı bulunabilir.'); return; }
+      mutate(() => entries.push({ id: window.M3BUILDER.uid('menu'), label: 'Yeni bağlantı', href: '#anasayfa', visible: true }));
+    })); container.append(toolbar);
+    container.append(el('p', 'section-note', 'Web adresleri, e-posta veya #dunya gibi sayfa içi bağlantılar kullanabilirsin. Özel sayfa kısayolları aşağıdan eklenir; taslak sayfaların bağlantıları ziyaretçilerden gizlenir. Menü yazılarını buradan düzenle.'));
+    if (!entries.length) container.append(el('p', 'builder-list-empty', 'Menüde henüz bağlantı yok. Yeni bağlantı veya sayfa kısayolu ekle.'));
+    entries.forEach((entry, index) => {
+      const block = card(entry.label || 'Yeni bağlantı', `${index + 1}. sıradaki menü bağlantısı`);
+      const controls = el('div', 'builder-row-actions');
+      const up = button('↑', 'icon-button', () => move(-1)); up.disabled = index === 0; up.setAttribute('aria-label', `${entry.label}: yukarı taşı`);
+      const down = button('↓', 'icon-button', () => move(1)); down.disabled = index === entries.length - 1; down.setAttribute('aria-label', `${entry.label}: aşağı taşı`);
+      const remove = button('Kaldır', 'text-button builder-danger', () => mutate(() => entries.splice(index, 1)));
+      controls.append(up, down, remove); block.container.querySelector('.card-heading').append(controls);
+      const grid = el('div', 'field-grid');
+      grid.append(field('Menü yazısı', ['builder', 'navigation', index, 'label'], { maxLength: 80 }).wrapper, field('Bağlantı adresi', ['builder', 'navigation', index, 'href'], { maxLength: 2048, placeholder: '#anasayfa veya https://…' }).wrapper);
+      block.body.append(grid, builderToggle('Menüde göster', ['builder', 'navigation', index, 'visible'])); container.append(block.container);
+      function move(direction) { mutate(() => { const destination = index + direction; [entries[index], entries[destination]] = [entries[destination], entries[index]]; }); }
+    });
+    const shortcuts = card('Sayfa kısayolları', 'Bir sayfayı oluşturmak onu otomatik olarak menüye eklemez. Buradan ekleyip üstteki listede sıralayabilirsin.');
+    if (!state.data.builder.pages.length) shortcuts.body.append(el('p', 'help-text', 'Önce Sayfalar bölümünden bir sayfa oluştur.'), button('Sayfalara git ↗', 'button button-secondary', () => goTo('sayfalar')));
+    state.data.builder.pages.forEach((page) => {
+      const row = el('div', 'builder-shortcut');
+      const copy = el('div'); copy.append(el('strong', '', page.title || 'Adsız sayfa'), el('small', '', window.M3BUILDER.pageHref(page)));
+      const exists = entries.some((entry) => builderLinkPageSlug(entry.href) === page.slug);
+      const add = button(exists ? 'Menüde mevcut' : 'Menüye ekle', 'button button-secondary', () => builderAddToMenu(page)); add.disabled = exists;
+      row.append(copy, builderBadge(page.published ? 'Yayında' : 'Taslak', page.published), add); shortcuts.body.append(row);
+    }); container.append(shortcuts.container);
+  }
+
   function handleAuthFailure(error) {
     if (error.status !== 401 && error.status !== 403) return;
     notice('Yönetim oturumun sona erdi veya düzenleme yetkin değişti. Taslağın bu sayfada korunuyor. Yeniden giriş yapmadan önce yedeğini indirebilirsin.', [
@@ -632,6 +926,10 @@
   }
 
   function previewPath() {
+    if (state.section === 'sayfalar') {
+      const page = state.data?.builder?.pages.find((item) => item.id === state.builderPageId);
+      if (page) return `/?preview=1${window.M3BUILDER.pageHref(page)}`;
+    }
     const hash = state.section === 'hesap' ? (state.authMode === 'register' ? '#kayit' : '#giris') : state.section === 'siniflar' ? '#siniflar' : state.section === 'dunya' ? '#dunya' : state.section === 'haberler' ? '#haberler' : state.section === 'sorular' ? '#destek' : '';
     return `/?preview=1${hash}`;
   }

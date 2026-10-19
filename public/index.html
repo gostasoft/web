@@ -14,12 +14,15 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="auth.css">
   <link rel="stylesheet" href="skin.css">
+  <link rel="stylesheet" href="builder.css">
   <script src="content.js" defer></script>
   <script src="auth-config.js" defer></script>
   <script src="cms-defaults.js" defer></script>
+  <script src="builder-model.js" defer></script>
   <script src="cms.js" defer></script>
   <script src="auth.js" defer></script>
   <script src="app.js" defer></script>
+  <script src="builder.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">İçeriğe geç</a>
@@ -53,7 +56,7 @@
   </header>
 
   <main id="main">
-    <section class="hero" id="anasayfa" aria-labelledby="hero-title">
+    <section class="hero" id="anasayfa" data-builder-builtin="hero" aria-labelledby="hero-title">
       <img class="hero-art" data-cms-image="hero.main" src="assets/hero.webp" alt="" fetchpriority="high" width="1672" height="941">
       <div class="hero-shade"></div>
       <div class="wrap hero-inner">
@@ -69,13 +72,13 @@
       <a class="scroll-hint" href="#haberler" aria-label="Haberler bölümüne ilerle"><span></span>KEŞFETMEYE DEVAM ET</a>
     </section>
 
-    <div class="wrap start-strip" aria-label="Başlangıç adımları">
+    <div class="wrap start-strip" data-builder-builtin="start" aria-label="Başlangıç adımları">
       <button class="start-item" data-modal="register"><span class="start-number">01</span><svg class="start-icon"><use href="#i-user"/></svg><span><strong data-cms-text="start.create.title">Hesabını Oluştur</strong><small data-cms-text="start.create.description">Yolculuğa ilk adım</small></span><svg class="icon"><use href="#i-chevron"/></svg></button>
       <button class="start-item" data-modal="download"><span class="start-number">02</span><svg class="start-icon"><use href="#i-download"/></svg><span><strong data-cms-text="start.download.title">Oyunu İndir</strong><small data-cms-text="start.download.description">Dünyaya açılan kapı</small></span><svg class="icon"><use href="#i-chevron"/></svg></button>
       <a class="start-item" href="#siniflar"><span class="start-number">03</span><svg class="start-icon"><use href="#i-sword"/></svg><span><strong data-cms-text="start.classes.title">Sınıfını Seç</strong><small data-cms-text="start.classes.description">Hikâyenin yüzünü bul</small></span><svg class="icon"><use href="#i-chevron"/></svg></a>
     </div>
 
-    <section class="news-section section-space wrap" id="haberler" aria-labelledby="news-title">
+    <section class="news-section section-space wrap" id="haberler" data-builder-builtin="news" aria-labelledby="news-title">
       <div class="section-heading"><div><p class="eyebrow" data-cms-text="news.eyebrow">DUYURULAR & REHBERLER</p><h2 id="news-title" data-cms-text="news.title">Metin3'ten haberler</h2></div><span class="heading-line"></span><a class="text-link" href="#dunya">Dünyayı keşfet<svg class="icon"><use href="#i-arrow"/></svg></a></div>
       <div class="news-layout">
         <div class="news-main">
@@ -87,7 +90,7 @@
       </div>
     </section>
 
-    <section class="classes-section section-space" id="siniflar" aria-labelledby="classes-title">
+    <section class="classes-section section-space" id="siniflar" data-builder-builtin="classes" aria-labelledby="classes-title">
       <div class="wrap">
         <div class="center-heading"><p class="eyebrow" data-cms-text="classes.eyebrow">KARAKTERİN. SENİN HİKÂYEN.</p><h2 id="classes-title" data-cms-text="classes.title">Kaderini sen seç.</h2><p data-cms-text="classes.description" data-cms-lines>Çeliğin gücü, gölgenin hızı, karanlığın sırrı ya da ruhların sesi.</p></div>
         <div class="class-grid" id="class-tabs" role="tablist" aria-label="Karakter sınıfı seçimi"></div>
@@ -95,17 +98,18 @@
       </div>
     </section>
 
-    <section class="worlds-section section-space wrap" id="dunya" aria-labelledby="worlds-title">
+    <section class="worlds-section section-space wrap" id="dunya" data-builder-builtin="world" aria-labelledby="worlds-title">
       <div class="section-heading world-heading"><div><p class="eyebrow" data-cms-text="world.eyebrow">METIN3 DÜNYASINDAN</p><h2 id="worlds-title" data-cms-text="world.title" data-cms-lines>Savaşın ötesinde <br>bir dünya.</h2></div><p data-cms-text="world.description" data-cms-lines>Kimi yol kadim bir kapıya çıkar. <br>Kimi yol, suyun kıyısında bir nefese.</p></div>
       <div class="world-stage" id="world-stage" role="tabpanel"><img id="world-image" src="assets/world-village.webp" alt="" loading="lazy" width="1280" height="720"><div class="world-gradient"></div><div class="world-caption" id="world-caption"></div><button class="world-expand icon-button" id="world-expand" aria-label="Seçili dünya görselini büyüt"><svg class="icon"><use href="#i-image"/></svg></button></div>
       <div class="world-tabs" id="world-tabs" role="tablist" aria-label="Dünya sahnesi seçimi"></div>
     </section>
 
-    <section class="support-section section-space wrap" id="destek" aria-labelledby="support-title"><div class="support-intro"><p class="eyebrow" data-cms-text="support.eyebrow">YOLCULUĞA HAZIR MISIN?</p><h2 id="support-title" data-cms-text="support.title" data-cms-lines>Aklındaki <br>sorular.</h2><p data-cms-text="support.description" data-cms-lines>İlk adımı atmadan önce <br>ihtiyaç duyduğun kısa bilgiler.</p><button class="text-link" data-modal="community"><span data-cms-text="support.cta">Yol arkadaşlarını bul</span><svg class="icon"><use href="#i-arrow"/></svg></button></div><div class="faq-list" id="faq-list"></div></section>
+    <section class="support-section section-space wrap" id="destek" data-builder-builtin="faq" aria-labelledby="support-title"><div class="support-intro"><p class="eyebrow" data-cms-text="support.eyebrow">YOLCULUĞA HAZIR MISIN?</p><h2 id="support-title" data-cms-text="support.title" data-cms-lines>Aklındaki <br>sorular.</h2><p data-cms-text="support.description" data-cms-lines>İlk adımı atmadan önce <br>ihtiyaç duyduğun kısa bilgiler.</p><button class="text-link" data-modal="community"><span data-cms-text="support.cta">Yol arkadaşlarını bul</span><svg class="icon"><use href="#i-arrow"/></svg></button></div><div class="faq-list" id="faq-list"></div></section>
 
-    <section class="community-section" aria-labelledby="community-title"><img data-cms-image="community.background" src="assets/world-village.webp" alt="" loading="lazy" width="1280" height="720"><div class="community-shade"></div><div class="wrap community-inner"><div><p class="eyebrow" data-cms-text="community.eyebrow">BİRLİKTE DAHA GÜÇLÜ</p><h2 id="community-title" data-cms-text="community.title">Efsaneler tek başına yazılmaz.</h2><p data-cms-text="community.description" data-cms-lines>Aynı tutkuyu paylaş. Yol arkadaşlarını bul.</p></div><button class="button primary" data-modal="community"><span data-cms-text="button.community">Topluluğa Katıl</span><svg class="icon"><use href="#i-arrow"/></svg></button></div></section>
+    <section class="community-section" data-builder-builtin="community" aria-labelledby="community-title"><img data-cms-image="community.background" src="assets/world-village.webp" alt="" loading="lazy" width="1280" height="720"><div class="community-shade"></div><div class="wrap community-inner"><div><p class="eyebrow" data-cms-text="community.eyebrow">BİRLİKTE DAHA GÜÇLÜ</p><h2 id="community-title" data-cms-text="community.title">Efsaneler tek başına yazılmaz.</h2><p data-cms-text="community.description" data-cms-lines>Aynı tutkuyu paylaş. Yol arkadaşlarını bul.</p></div><button class="button primary" data-modal="community"><span data-cms-text="button.community">Topluluğa Katıl</span><svg class="icon"><use href="#i-arrow"/></svg></button></div></section>
   </main>
   <main id="auth-main" hidden></main>
+  <main id="cms-page" hidden></main>
 
   <footer class="site-footer"><div class="wrap footer-main"><a class="brand" href="#anasayfa" aria-label="Metin3 ana sayfa"><img class="brand-logo" data-cms-image="brand.logo" src="assets/brand/metin3-logo.png" alt="Metin3" width="167" height="94"></a><nav aria-label="Alt gezinme"><a href="#dunya" data-cms-text="nav.world">Dünya</a><a href="#siniflar" data-cms-text="nav.classes">Sınıflar</a><a href="#haberler" data-cms-text="nav.news">Haberler</a><a href="#destek" data-cms-text="nav.support" data-cms-link="support" data-cms-fallback="#destek">Destek</a></nav><button class="text-link" data-modal="about"><span data-cms-text="footer.about">Tasarım hakkında</span><svg class="icon"><use href="#i-arrow"/></svg></button></div><div class="wrap footer-bottom"><span data-cms-text="footer.copyright">© 2026 METIN3</span><span data-cms-text="footer.note">Metin3 · Eski ruh, yeni bir efsane.</span><a href="#anasayfa" data-cms-text="footer.backTop">Başa dön ↑</a></div></footer>
   <dialog id="site-dialog" aria-labelledby="dialog-title"><button class="dialog-close icon-button" aria-label="Pencereyi kapat"><svg class="icon"><use href="#i-close"/></svg></button><div id="dialog-content"></div></dialog>

@@ -16,6 +16,22 @@ export type CmsWorld = {
 };
 export type CmsFaq = { question: string; answer: string; [key: string]: unknown };
 export type CmsAuthCopy = { eyebrow: string; title: string; description: string };
+export type CmsBuiltinSource = "hero" | "start" | "news" | "classes" | "world" | "faq" | "community";
+export type CmsSectionStyle = {
+  tone: "dark" | "burgundy" | "transparent";
+  align: "left" | "center";
+  spacing: "compact" | "normal" | "wide";
+  imageSide: "left" | "right";
+};
+export type CmsSectionItem = { id: string; title: string; body: string; image: CmsImage; href: string };
+export type CmsSection = { id: string; kind: "builtin"; source: CmsBuiltinSource; visible: boolean } | {
+  id: string; kind: "text" | "imageText" | "cards" | "gallery" | "faq" | "cta";
+  visible: boolean; source?: CmsBuiltinSource; eyebrow: string; title: string; body: string;
+  image: CmsImage; button: { label: string; href: string }; style: CmsSectionStyle; items: CmsSectionItem[];
+};
+export type CmsPage = { id: string; slug: string; title: string; description: string; published: boolean; sections: CmsSection[] };
+export type CmsNavigation = { id: string; label: string; href: string; visible: boolean };
+export type CmsBuilder = { version: 1; home: CmsSection[]; pages: CmsPage[]; navigation: CmsNavigation[] };
 export type CmsDocument = {
   version: 1;
   texts: Record<string, string>;
@@ -23,6 +39,7 @@ export type CmsDocument = {
   links: Record<string, string>;
   content: { classes: CmsClass[]; news: CmsNews[]; worlds: CmsWorld[]; faq: CmsFaq[] };
   auth: { login: CmsAuthCopy; register: CmsAuthCopy };
+  builder?: CmsBuilder;
   [key: string]: unknown;
 };
 
@@ -54,7 +71,9 @@ function boundedString(value: unknown, maximum = 16000): value is string {
 // Validate every key, including future fields, before any document is merged
 // into the frontend defaults. This prevents prototype-polluting payloads.
 function validateTree(value: unknown, depth = 0, budget = { count: 0 }): void {
-  input(++budget.count <= 25000 && depth <= 14, "İçerik çok karmaşık.");
+  // The builder permits 200 sections with 20 small items each. Keep traversal
+  // bounded while allowing that valid shape within the 512 KB document cap.
+  input(++budget.count <= 50000 && depth <= 14, "İçerik çok karmaşık.");
   if (typeof value === "string") {
     input(boundedString(value), "Bir metin alanı çok uzun veya geçersiz.");
   } else if (typeof value === "number") {
@@ -117,6 +136,109 @@ function collection(value: unknown, limit: number, label: string): asserts value
   }
 }
 
+const BUILTIN_SOURCES = new Set(["hero", "start", "news", "classes", "world", "faq", "community"]);
+const CUSTOM_SECTION_KINDS = new Set(["text", "imageText", "cards", "gallery", "faq", "cta"]);
+const BUILDER_ID = /^[A-Za-z0-9_-]{1,100}$/;
+const PAGE_SLUG = /^[a-z][a-z0-9-]{0,59}$/;
+
+function exactBuilderFields(value: unknown, keys: string[], label: string): asserts value is Record<string, unknown> {
+  input(record(value), `${label} alanı geçersiz.`);
+  input(Object.keys(value).every((key) => keys.includes(key)), `${label} bölümünde desteklenmeyen alan var.`);
+}
+
+function builderRecords(value: unknown, maximum: number, label: string): asserts value is Record<string, unknown>[] {
+  input(Array.isArray(value) && value.length <= maximum, `${label} listesi en fazla ${maximum} öğe içerebilir.`);
+  const ids = new Set<string>();
+  for (const item of value) {
+    input(record(item) && typeof item.id === "string" && BUILDER_ID.test(item.id) && !FORBIDDEN_KEYS.has(item.id), `${label}: güvenli bir kimlik gerekli.`);
+    input(!ids.has(item.id), `${label}: kimlikler benzersiz olmalı.`);
+    ids.add(item.id);
+  }
+}
+
+function builderImage(value: unknown): void {
+  exactBuilderFields(value, ["src", "x", "y", "fit"], "Görsel");
+  // Text-only blocks can leave their illustration unset. Legacy site images
+  // retain their existing nonempty source requirement.
+  input(value.src === "" || isSafeImageSource(value.src), "Bölüm görselinin adresi geçersiz.");
+  for (const coordinate of [value.x, value.y]) input(coordinate === undefined || (typeof coordinate === "number" && Number.isFinite(coordinate) && coordinate >= 0 && coordinate <= 100), "Görsel konumu 0 ile 100 arasında olmalı.");
+  input(value.fit === undefined || value.fit === "cover" || value.fit === "contain", "Görsel yerleşimi geçersiz.");
+}
+
+function builderSections(value: unknown, home: boolean): asserts value is CmsSection[] {
+  builderRecords(value, 40, home ? "Ana sayfa bölümleri" : "Sayfa bölümleri");
+  const sources = new Set<string>();
+  for (const section of value) {
+    input(typeof section.visible === "boolean", "Bölüm görünürlüğü geçersiz.");
+    if (section.kind === "builtin") {
+      input(home, "Hazır site bölümleri yalnızca ana sayfada kullanılabilir.");
+      exactBuilderFields(section, ["id", "kind", "source", "visible"], "Hazır bölüm");
+      input(typeof section.source === "string" && BUILTIN_SOURCES.has(section.source), "Hazır bölüm kaynağı geçersiz.");
+      input(!sources.has(section.source), "Bir hazır bölüm ana sayfada yalnızca bir kez kullanılabilir.");
+      sources.add(section.source);
+      continue;
+    }
+    exactBuilderFields(section, ["id", "kind", "source", "visible", "eyebrow", "title", "body", "image", "button", "style", "items"], "Özel bölüm");
+    input(typeof section.kind === "string" && CUSTOM_SECTION_KINDS.has(section.kind), "Bölüm türü geçersiz.");
+    input(section.source === undefined || (typeof section.source === "string" && BUILTIN_SOURCES.has(section.source)), "Bölüm kaynağı geçersiz.");
+    input(boundedString(section.eyebrow, 100) && boundedString(section.title, 200) && boundedString(section.body, 12000), "Bölüm metni geçersiz veya çok uzun.");
+    builderImage(section.image);
+    exactBuilderFields(section.button, ["label", "href"], "Bölüm düğmesi");
+    input(boundedString(section.button.label, 80) && (section.button.href === "" || isSafeLink(section.button.href)), "Bölüm düğmesinin metni veya bağlantısı geçersiz.");
+    exactBuilderFields(section.style, ["tone", "align", "spacing", "imageSide"], "Bölüm görünümü");
+    input(["dark", "burgundy", "transparent"].includes(section.style.tone as string) &&
+      ["left", "center"].includes(section.style.align as string) &&
+      ["compact", "normal", "wide"].includes(section.style.spacing as string) &&
+      ["left", "right"].includes(section.style.imageSide as string), "Bölüm görünümü desteklenmiyor.");
+    builderRecords(section.items, 20, "Bölüm öğeleri");
+    for (const item of section.items) {
+      exactBuilderFields(item, ["id", "title", "body", "image", "href"], "Bölüm öğesi");
+      input(boundedString(item.title, 200) && boundedString(item.body, 12000) && (item.href === "" || isSafeLink(item.href)), "Bölüm öğesinin metni veya bağlantısı geçersiz.");
+      builderImage(item.image);
+    }
+  }
+}
+
+function validateCmsBuilder(value: unknown): asserts value is CmsBuilder {
+  exactBuilderFields(value, ["version", "home", "pages", "navigation"], "Sayfa düzenleyici");
+  input(value.version === 1, "Sayfa düzenleyici sürümü geçersiz.");
+  builderSections(value.home, true);
+  builderRecords(value.pages, 30, "Özel sayfalar");
+  const slugs = new Set<string>();
+  let sectionCount = value.home.length;
+  for (const page of value.pages) {
+    exactBuilderFields(page, ["id", "slug", "title", "description", "published", "sections"], "Özel sayfa");
+    input(typeof page.slug === "string" && PAGE_SLUG.test(page.slug) && !slugs.has(page.slug), "Sayfa adresi küçük harfle başlamalı ve benzersiz olmalı (en fazla 60 karakter).");
+    slugs.add(page.slug);
+    input(boundedString(page.title, 200) && boundedString(page.description, 12000) && typeof page.published === "boolean", "Sayfa başlığı, açıklaması veya yayın durumu geçersiz.");
+    builderSections(page.sections, false);
+    sectionCount += page.sections.length;
+    input(sectionCount <= 200, "Toplam bölüm sayısı 200 sınırını aşıyor.");
+  }
+  builderRecords(value.navigation, 20, "Menü bağlantıları");
+  for (const entry of value.navigation) {
+    exactBuilderFields(entry, ["id", "label", "href", "visible"], "Menü bağlantısı");
+    input(boundedString(entry.label, 80) && isSafeLink(entry.href) && typeof entry.visible === "boolean", "Menü metni, bağlantısı veya görünürlüğü geçersiz.");
+  }
+}
+
+// This projection is for the visitor endpoint only. The authenticated editor
+// retains the full document, including drafts, for editing and local preview.
+export function publicCmsDocument(document: CmsDocument | null): CmsDocument | null {
+  if (!document || document.builder === undefined) return document;
+  try { validateCmsBuilder(document.builder); }
+  catch { return { ...document, builder: undefined }; }
+  const pages = document.builder.pages.filter((page) => page.published === true);
+  const publishedSlugs = new Set(pages.map((page) => page.slug));
+  const navigation = document.builder.navigation.filter((entry) => {
+    const match = /^(?:\/)?#sayfa\/([^?#]*)/.exec(entry.href);
+    if (!match) return true;
+    try { return publishedSlugs.has(decodeURIComponent(match[1])); }
+    catch { return false; }
+  });
+  return { ...document, builder: { ...document.builder, pages, navigation } };
+}
+
 export function validateCmsDocument(value: unknown): CmsDocument {
   validateTree(value);
   input(record(value) && value.version === 1, "İçerik sürümü geçersiz.");
@@ -158,6 +280,7 @@ export function validateCmsDocument(value: unknown): CmsDocument {
   input(record(value.auth), "Hesap ekranları geçersiz.");
   fields(value.auth.login, ["eyebrow", "title", "description"], "Giriş ekranı");
   fields(value.auth.register, ["eyebrow", "title", "description"], "Kayıt ekranı");
+  if (value.builder !== undefined) validateCmsBuilder(value.builder);
   return value as CmsDocument;
 }
 
