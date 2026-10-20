@@ -4,6 +4,7 @@
 
 - Sayfa boyunca kızıl kor, yavaş kül ve altın ateş böceği parıltıları; açılış alanında 16–22 saniye aralıkla küçük kıvılcım açılması.
 - Küller belirgin kırmızı/kızıl renktedir; ince, farklı boyutlarda parçalar dönerek ve yanlara salınarak süzülür. Altın parıltılar korunur. Parçacık bütçesi artırılmaz.
+- Masaüstünde fareyi yaklaşık 80 ms yumuşatmayla izleyen geniş, hafif altın-kızıl ışık vardır. Fare sayfadan çıktığında söner. Ek bir çizim döngüsü oluşturmaz; atmosfer durdurulduğunda ve azaltılmış hareket tercihinde kapanır. Dokunmatik hareketler ışık üretmez.
 - Açılış, dünya görseli ve topluluk bölümlerinde yavaş ışık/sis geçişi. Görünmeyen sahnelerin CSS döngüleri durur.
 - Tuval fare/touch olaylarını yakalamaz. Başlıklar ve açılış açıklaması/butonları etrafında parçacık çizilmez. Efektler ses üretmez.
 - “Atmosferi durdur” tercihi yalnızca ziyaretçinin tarayıcısında saklanır. Bu düğme, Ninja videosunun kendi kontrolünden bağımsızdır.

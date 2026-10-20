@@ -66,6 +66,7 @@ export function mountAtmosphere(win = window, doc = document) {
   let width = win.innerWidth, height = win.innerHeight, ratio = 0, mode = 'rest', profile;
   let motes = [], protections = [], heroRect = null, time = 0, burstTime = 3, burst = null;
   let pointer = 0, wind = 0;
+  const light = { x: 0, y: 0, targetX: 0, targetY: 0, alpha: 0, inside: false, primed: false };
   const cleanups = [], scenes = [];
   const listen = (target, type, callback, options) => {
     target?.addEventListener(type, callback, options);
@@ -109,6 +110,25 @@ export function mountAtmosphere(win = window, doc = document) {
     if (dirty) measure();
     time += dt; clear();
     wind += (pointer - wind) * .025;
+    // Diffuse cursor light shares the existing frame budget; never captures input.
+    if (mode === 'full') {
+      const ease = 1 - Math.exp(-dt * 12);
+      light.x += (light.targetX - light.x) * ease;
+      light.y += (light.targetY - light.y) * ease;
+      light.alpha += ((light.inside ? 1 : 0) - light.alpha) * (1 - Math.exp(-dt * 7));
+      if (light.alpha > .002) {
+        const radius = Math.min(260, width * .3);
+        const glow = context.createRadialGradient(light.x, light.y, 0, light.x, light.y, radius);
+        glow.addColorStop(0, 'rgba(255, 219, 165, .13)');
+        glow.addColorStop(.36, 'rgba(239, 173, 108, .065)');
+        glow.addColorStop(.7, 'rgba(180, 53, 37, .025)');
+        glow.addColorStop(1, 'rgba(180, 53, 37, 0)');
+        context.globalAlpha = light.alpha;
+        context.fillStyle = glow;
+        context.fillRect(light.x - radius, light.y - radius, radius * 2, radius * 2);
+        context.globalAlpha = 1;
+      }
+    }
     for (const mote of motes) {
       mote.life += dt;
       mote.y = (mote.y - mote.speed * dt + 1) % 1;
@@ -172,6 +192,7 @@ export function mountAtmosphere(win = window, doc = document) {
       motes = makeMotes(profile.count); dirty = true;
     }
     mode = profile.mode;
+    if (mode !== 'full') { light.inside = false; light.primed = false; light.alpha = 0; }
     doc.body.dataset.atmosphere = mode;
     canvas.hidden = mode === 'rest';
     toggle.hidden = blocked || !visible || doc.hidden || suspended;
@@ -190,7 +211,15 @@ export function mountAtmosphere(win = window, doc = document) {
   listen(win, 'scroll', () => { dirty = true; sync(); }, { passive: true });
   listen(win, 'resize', () => { dirty = true; sync(); }, { passive: true });
   listen(win, 'hashchange', () => { dirty = true; sync(); });
-  listen(win, 'pointermove', event => { if (event.pointerType === 'mouse' && mode === 'full') pointer = event.clientX / Math.max(1, width) - .5; }, { passive: true });
+  listen(win, 'pointermove', event => {
+    if (event.pointerType !== 'mouse' || mode !== 'full') return;
+    pointer = event.clientX / Math.max(1, width) - .5;
+    light.targetX = event.clientX; light.targetY = event.clientY; light.inside = true;
+    if (!light.primed) { light.x = light.targetX; light.y = light.targetY; light.primed = true; }
+  }, { passive: true });
+  const leaveLight = () => { light.inside = false; light.primed = false; pointer = 0; };
+  listen(doc, 'pointerleave', leaveLight);
+  listen(win, 'blur', leaveLight);
   listen(doc, 'visibilitychange', sync);
   listen(reduced, 'change', sync); listen(mobile, 'change', sync); listen(connection, 'change', sync);
   listen(win, 'pagehide', () => { suspended = true; sync(); });
