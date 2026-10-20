@@ -111,7 +111,7 @@ export function mountAtmosphere(win = window, doc = document) {
     time += dt; clear();
     wind += (pointer - wind) * .025;
     // Diffuse cursor light shares the existing frame budget; never captures input.
-    if (mode === 'full') {
+    if (mode !== 'rest') {
       const ease = 1 - Math.exp(-dt * 12);
       light.x += (light.targetX - light.x) * ease;
       light.y += (light.targetY - light.y) * ease;
@@ -192,7 +192,7 @@ export function mountAtmosphere(win = window, doc = document) {
       motes = makeMotes(profile.count); dirty = true;
     }
     mode = profile.mode;
-    if (mode !== 'full') { light.inside = false; light.primed = false; light.alpha = 0; }
+    if (mode === 'rest') { light.inside = false; light.primed = false; light.alpha = 0; }
     doc.body.dataset.atmosphere = mode;
     canvas.hidden = mode === 'rest';
     toggle.hidden = blocked || !visible || doc.hidden || suspended;
@@ -212,7 +212,8 @@ export function mountAtmosphere(win = window, doc = document) {
   listen(win, 'resize', () => { dirty = true; sync(); }, { passive: true });
   listen(win, 'hashchange', () => { dirty = true; sync(); });
   listen(win, 'pointermove', event => {
-    if (event.pointerType !== 'mouse' || mode !== 'full') return;
+    if (mode === 'rest') return;
+    if (event.pointerType !== 'mouse') { light.inside = false; light.primed = false; return; }
     pointer = event.clientX / Math.max(1, width) - .5;
     light.targetX = event.clientX; light.targetY = event.clientY; light.inside = true;
     if (!light.primed) { light.x = light.targetX; light.y = light.targetY; light.primed = true; }
