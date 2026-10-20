@@ -113,11 +113,25 @@ export function mountAtmosphere(win = window, doc = document) {
       mote.life += dt;
       mote.y = (mote.y - mote.speed * dt + 1) % 1;
       mote.x = (mote.x + (mote.drift + wind * .01) * dt + 1) % 1;
-      const x = mote.x * width + Math.sin(time * .35 + mote.phase) * (mote.kind === 'firefly' ? 18 : 7);
+      const x = mote.x * width + Math.sin(time * .35 + mote.phase) * (mote.kind === 'firefly' ? 18 : mote.kind === 'ash' ? 14 : 7);
       const y = mote.y * height + Math.cos(time * .45 + mote.phase) * 9;
       const pulse = .35 + .65 * Math.pow((Math.sin(time * (mote.kind === 'firefly' ? 1.1 : .55) + mote.phase) + 1) / 2, 2);
-      const alpha = (mote.kind === 'ash' ? .25 : .62) * pulse * Math.min(1, y / 130, (height - y) / 70);
-      point(x, y, mote.radius, mote.kind === 'firefly' ? '#f7d77b' : mote.kind === 'ash' ? '#bd9e82' : '#ff8a42', Math.max(0, alpha), mote.kind !== 'ash');
+      const alpha = (mote.kind === 'ash' ? .78 : .68) * pulse * Math.min(1, y / 130, (height - y) / 70);
+      const color = mote.kind === 'firefly' ? '#f7d77b' : mote.kind === 'ash' ? '#ed2844' : '#ff4938';
+      point(x, y, mote.radius, color, Math.max(0, alpha), true);
+      // Thin crimson flakes flutter independently, rather than all looking like dots.
+      if (mote.kind === 'ash' && y >= (mobile.matches ? 80 : 103) && !protectedAt(x, y)) {
+        const size = mote.radius * 2.1;
+        context.save();
+        context.translate(x, y);
+        context.rotate(mote.phase + time * .45);
+        context.scale(.45 + Math.abs(Math.sin(time * .7 + mote.phase)) * .55, 1);
+        context.globalAlpha = Math.max(0, alpha);
+        context.fillStyle = color;
+        context.beginPath(); context.moveTo(-size, -.35 * size); context.lineTo(.3 * size, -.65 * size);
+        context.lineTo(size, .4 * size); context.lineTo(-.4 * size, .7 * size); context.closePath(); context.fill();
+        context.restore();
+      }
     }
     // A sparse, small golden bloom in the hero sky, without a full-screen flash.
     if (profile.bursts && heroRect) {
