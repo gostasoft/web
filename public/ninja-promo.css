@@ -1,0 +1,16 @@
+.ninja-promo { margin: 0 0 44px; --met3-height: 570px; --met3-height-mobile: 670px; --met3-surface: #080505; scroll-margin-top: 100px; }
+.ninja-promo-copy { font-family: Manrope, sans-serif; }
+.ninja-promo-eyebrow { color: #d6ae71; font-size: 11px; font-weight: 800; letter-spacing: .19em; }
+.ninja-promo-copy h3 { margin: 20px 0; color: #f6e6cb; font: 600 clamp(32px, 3.7vw, 56px)/1.07 'Cormorant Garamond', Georgia, serif; }
+.ninja-promo-copy h3 em { color: #e78959; font-style: normal; }
+.ninja-promo-copy > p:not(.ninja-promo-eyebrow) { max-width: 360px; margin: 0 0 26px; color: #cbbdaf; font-size: 14px; line-height: 1.85; }
+.ninja-promo-copy .button { display: inline-flex; align-items: center; gap: 24px; padding: 14px 22px; border: 1px solid #b78a49; background: linear-gradient(120deg, #7a231d, #30100e); color: #ffe2ab; font-size: 13px; font-weight: 700; text-decoration: none; transition: background .25s; }
+.ninja-promo-copy .button:hover { background: #78251d; }
+.ninja-promo-copy .button:focus-visible { outline: 2px solid #ffe2ab; outline-offset: 4px; }
+.ninja-promo-caption { display: block; margin-top: 28px; color: #b29a80; font-size: 9px; letter-spacing: .12em; line-height: 1.8; }
+@media (max-width: 640px) {
+  .ninja-promo { margin-bottom: 30px; }
+  .ninja-promo-copy h3 { font-size: 36px; }
+  .ninja-promo-copy > p:not(.ninja-promo-eyebrow) { font-size: 13px; }
+  .ninja-promo-caption { margin-top: 18px; }
+}

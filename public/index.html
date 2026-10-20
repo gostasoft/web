@@ -16,6 +16,9 @@
   <link rel="stylesheet" href="skin.css">
   <link rel="stylesheet" href="builder.css">
   <link rel="stylesheet" href="canvas-renderer.css">
+  <link rel="stylesheet" href="character-motion.css">
+  <link rel="stylesheet" href="ninja-promo.css">
+  <script type="module" src="/animation-lab/animations.js"></script>
   <script src="content.js" defer></script>
   <script src="auth-config.js" defer></script>
   <script src="cms-defaults.js" defer></script>
@@ -23,6 +26,8 @@
   <script src="canvas-model.js" defer></script>
   <script src="cms.js" defer></script>
   <script src="auth.js" defer></script>
+  <script src="character-config.js" defer></script>
+  <script src="character-motion.js" defer></script>
   <script src="app.js" defer></script>
   <script src="canvas-renderer.js" defer></script>
   <script src="builder.js" defer></script>
@@ -96,7 +101,19 @@
     <section class="classes-section section-space" id="siniflar" data-builder-builtin="classes" aria-labelledby="classes-title">
       <div class="wrap">
         <div class="center-heading"><p class="eyebrow" data-cms-text="classes.eyebrow">KARAKTERİN. SENİN HİKÂYEN.</p><h2 id="classes-title" data-cms-text="classes.title">Kaderini sen seç.</h2><p data-cms-text="classes.description" data-cms-lines>Çeliğin gücü, gölgenin hızı, karanlığın sırrı ya da ruhların sesi.</p></div>
+        <met3-motion id="ninja-tanitimi" class="ninja-promo" variant="spotlight" presentation cutout label="Ninja — Kızıl gölgenin dansı" webm="/assets/ninja-promo/ninja-loop.webm" mp4="/assets/ninja-promo/ninja-loop.mp4">
+          <div slot="copy" class="ninja-promo-copy">
+            <p class="ninja-promo-eyebrow">MET3 ONLINE · NİNJA</p>
+            <h3>Gölgeden doğ.<br><em>İzini ateşle bırak.</em></h3>
+            <p>Çift hançerin keskinliği, sessiz bir adımın hızı. Savaşın ritmini değiştir; kendi efsaneni yaz.</p>
+            <a class="button button-primary" href="#kayit">Yolculuğa Başla <span aria-hidden="true">↗</span></a>
+            <span class="ninja-promo-caption">ÇİFT HANÇER / ÇEVİKLİK / YAKIN DÖVÜŞ</span>
+          </div>
+          <img slot="art" src="/assets/ninja-promo/ninja.webp" alt="Kızıl saçlı, çift hançerli Ninja" width="900" height="1125" loading="lazy" decoding="async" draggable="false">
+        </met3-motion>
+        <div class="m3-character-toolbar"><span class="m3-character-brand">MET3 <span>ONLINE</span><i aria-hidden="true"></i> SINIFLAR</span><button type="button" class="m3-motion-toggle" data-character-motion aria-pressed="true">Hareketi durdur</button></div>
         <div class="class-grid" id="class-tabs" role="tablist" aria-label="Karakter sınıfı seçimi"></div>
+        <div class="m3-character-footnote"><span>Bir sınıf seç. <span class="m3-keyboard-hint">← → ile keşfet.</span></span><span data-character-note>Karakter animasyonları henüz eklenmedi. Mevcut karakter görselleri gösteriliyor.</span></div>
         <div class="class-detail" id="class-detail" role="tabpanel" aria-live="polite"></div>
       </div>
     </section>

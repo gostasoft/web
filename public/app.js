@@ -9,6 +9,7 @@
   const esc = function (value) { return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;'); };
   const icon = function (name) { return '<svg class="icon" aria-hidden="true"><use href="#i-' + name + '"/></svg>'; };
   const state = { filter: 'Tümü', allNews: false, classIndex: 0, worldIndex: 0 };
+  let characterMotion;
   const dialog = $('#site-dialog');
   const dialogContent = $('#dialog-content');
   let modalTrigger = null;
@@ -36,9 +37,11 @@
   }
 
   function renderClasses() {
+    characterMotion?.destroy();
     $('#class-tabs').innerHTML = content.classes.map(function (item, index) {
-      return '<button class="class-card" role="tab" id="class-' + esc(item.id) + '" data-class="' + index + '" aria-selected="' + (index === state.classIndex) + '" aria-controls="class-detail" tabindex="' + (index === state.classIndex ? '0' : '-1') + '"><img src="' + esc(item.img) + '" alt="" width="195" height="260" loading="lazy"><span class="class-card-copy">' + (item.symbol ? '<img class="class-symbol" src="' + esc(item.symbol) + '" alt="" width="48" height="48">' : '') + '<span class="class-index">0' + (index + 1) + '</span><strong>' + esc(item.name) + '</strong><small>' + esc(item.style) + '</small></span></button>';
+      return '<button type="button" class="class-card m3-character-card" role="tab" id="class-' + esc(item.id) + '" data-class="' + index + '" data-character-id="' + esc(item.id) + '" aria-label="' + esc(item.name + ' — ' + item.style) + '" aria-selected="' + (index === state.classIndex) + '" aria-controls="class-detail" tabindex="' + (index === state.classIndex ? '0' : '-1') + '"><span class="m3-character-media" aria-hidden="true"><img class="m3-character-poster" src="' + esc(item.img) + '" alt="" width="195" height="260" loading="lazy" decoding="async"></span><span class="m3-character-light" aria-hidden="true"></span><span class="m3-character-energy" aria-hidden="true"></span><span class="m3-character-top" aria-hidden="true"><span>' + String(index + 1).padStart(2, '0') + '</span><span data-character-status>Görsel önizleme</span></span><span class="class-card-copy">' + (item.symbol ? '<img class="class-symbol" src="' + esc(item.symbol) + '" alt="" width="48" height="48">' : '') + '<small>' + esc(item.style) + '</small><strong>' + esc(item.name) + '</strong><span class="m3-character-summary">' + esc(item.description) + '</span><span class="m3-character-select" aria-hidden="true"><span>Hikâyesini keşfet</span>' + icon('arrow') + '</span></span></button>';
     }).join('');
+    characterMotion = window.M3CHARACTERS?.mount($('#siniflar'), window.M3CHARACTER_CONFIG);
     renderClassDetail();
   }
 
@@ -50,6 +53,7 @@
       button.tabIndex = active ? 0 : -1;
       if (active && focus) button.focus();
     });
+    characterMotion?.select(state.classIndex, true);
     renderClassDetail();
   }
 

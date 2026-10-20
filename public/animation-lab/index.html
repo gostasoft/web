@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#09090b">
+  <meta name="robots" content="noindex,nofollow">
+  <title>MET3 ONLINE — Animasyon Laboratuvarı V01</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./demo.css">
+  <script type="module" src="./demo.js"></script>
+</head>
+<body>
+  <a class="lab-skip" href="#modules">Modüllere geç</a>
+  <header class="lab-header"><a href="#top" class="lab-brand" aria-label="MET3 ONLINE laboratuvarı">MET<span>3</span><small>ONLINE</small></a><nav aria-label="Laboratuvar gezinme"><a href="#modules">Modüller</a><a href="#integration">Entegrasyon</a></nav><span class="lab-version">MOTION LAB <b>V01</b></span></header>
+  <main id="top" class="lab-wrap">
+    <section class="lab-intro" aria-labelledby="lab-title"><div><p class="lab-eyebrow">MET3 ONLINE / GÖRSEL HAREKET ÇALIŞMALARI</p><h1 id="lab-title">Durağan görseller.<br><em>Yaşayan atmosfer.</em></h1><p class="lab-lead">Kor ışığı, ağır akan sis ve sessiz bir enerji. Sayfaya sonradan yerleşebilen dört bağımsız hareket modülü.</p></div><div class="lab-intro-side"><span class="lab-local">YEREL LABORATUVAR</span><p>Bu sayfa ana siteden bağımsızdır. Portreler sabit görseldir; gördüğün hareketler CSS katmanlarıdır. Gerçek video slotları eklenmeye hazır.</p><button class="lab-control" id="pause-all" type="button" aria-pressed="false">Tümünü durdur <span aria-hidden="true">Ⅱ</span></button></div></section>
+    <div id="modules" class="lab-section-label"><span>01 — MODÜLLER</span><span>FAREYLE İNCELE · DOKUNARAK VURGULA</span></div>
+
+    <section class="lab-example" aria-labelledby="spotlight-title"><div class="lab-example-head"><h2 id="spotlight-title"><span>01</span> Character Spotlight Loop</h2><p>Karakter tanıtımı / geniş bölüm</p></div>
+      <met3-motion variant="spotlight" label="Savaşçı karakter vitrini" id="spotlight-demo">
+        <div slot="copy" class="lab-copy lab-copy-large"><p class="lab-kicker">ÇELİĞİN HAFIZASI</p><h3>Her efsane<br>bir <em>iradeyle</em> başlar.</h3><p>Gölgelerin içinden yükselen bir duruş. Çeliğin soğuğunu, korların sıcaklığıyla buluştur.</p><span class="lab-copy-divider" aria-hidden="true"></span><span class="lab-class-note">SAVAŞÇI / CESARET · ÇELİK · İRADE</span></div>
+        <img slot="art" src="./assets/warrior.webp" alt="Altın ve kızıl zırhlı MET3 Savaşçı portresi" width="195" height="260" loading="lazy" decoding="async" draggable="false">
+      </met3-motion>
+      <p class="lab-caption">Düşük tempolu floating, fareyle hafif tilt, kor parçacıkları ve arka ışık. Karakterin üzerine dokunarak ışık vurgusunu sabitleyebilirsin.</p>
+    </section>
+
+    <div class="lab-pair">
+      <section class="lab-example" aria-labelledby="aura-title"><div class="lab-example-head"><h2 id="aura-title"><span>02</span> Magic Aura Loop</h2><p>Büyü / sınıf vitrini</p></div>
+        <met3-motion variant="aura" label="Şaman büyü aurası" id="aura-demo">
+          <div slot="copy" class="lab-copy"><p class="lab-kicker">GÖRÜNMEYENİN GÜCÜ</p><h3>Kadim bir <em>yankı.</em></h3><p>İnce enerji yayları, nefes alan bir ışık ve usulca dağılan sis.</p></div>
+          <img slot="art" src="./assets/shaman.webp" alt="Asasını tutan MET3 Şaman portresi" width="195" height="260" loading="lazy" decoding="async" draggable="false">
+        </met3-motion>
+        <p class="lab-caption">Yavaş dönen kesik enerji yayları. Mobilde tek yörünge ve daha az parçacık.</p>
+      </section>
+      <section class="lab-example" aria-labelledby="item-title"><div class="lab-example-head"><h2 id="item-title"><span>03</span> Weapon / Item Highlight</h2><p>Ekipman / ödül kartı</p></div>
+        <met3-motion variant="item" label="Kor Kılıcı eşya vitrini" cutout id="item-demo">
+          <div slot="copy" class="lab-copy"><p class="lab-kicker">ATEŞTEN KALAN</p><h3>Kor <em>Kılıcı.</em></h3><p>Koyu metalin üzerinde kısa bir ışık taraması. Gücünü bağırmadan göster.</p></div>
+          <img slot="art" src="./assets/ember-blade.svg" alt="Kor Kılıcı için özgün temsili vektör silah çizimi; oyun eşyası değildir" width="340" height="560" loading="lazy" decoding="async" draggable="false">
+        </met3-motion>
+        <p class="lab-caption">Silah siluetine maskelenmiş ışık taraması. Bu vektör çizim temsili bir vitrin objesidir; gerçek oyun eşyası değildir.</p>
+      </section>
+    </div>
+
+    <section class="lab-example" aria-labelledby="ambient-title"><div class="lab-example-head"><h2 id="ambient-title"><span>04</span> Ambient Background Loop</h2><p>Bonus / geniş arka plan</p></div>
+      <met3-motion variant="ambient" label="Kor vadisi arka plan atmosferi" id="ambient-demo">
+        <div slot="copy" class="lab-copy lab-copy-wide"><p class="lab-kicker">DÜNYANIN NABZI</p><h3>Sessizliği bile<br><em>bir hikâye anlatır.</em></h3><p>İçeriğinin arkasında kalan yumuşak sis, seyrek kıvılcımlar ve ağır akan kızıl ışık.</p></div>
+      </met3-motion>
+      <p class="lab-caption">Metin ve bağlantıları kapatmayan, geniş bölüm içine eklenebilen dekoratif atmosfer.</p>
+    </section>
+
+    <section class="lab-integration" id="integration" aria-labelledby="integration-title"><div><p class="lab-eyebrow">02 — ENTEGRASYON</p><h2 id="integration-title">Bir klasör.<br>Dört ayrı kullanım.</h2><p>Dosyalar ve varlıklar aynı klasörde taşınabilir. Modül stilleri Shadow DOM içinde kalır; ana sitenin stillerine veya CMS nesnelerine yazmaz.</p><a href="./README.md" class="lab-doc-link">Entegrasyon rehberini aç <span aria-hidden="true">↗</span></a></div><div class="lab-code-box"><span>ÖRNEK / SPOTLIGHT</span><pre><code>&lt;script type="module" src="/animation-lab/animations.js"&gt;&lt;/script&gt;
+
+&lt;met3-motion variant="spotlight" label="Karakter vitrini"&gt;
+  &lt;div slot="copy"&gt;
+    &lt;h3&gt;Kendi hikâyeni yaz.&lt;/h3&gt;
+    &lt;p&gt;Bölüm açıklaman.&lt;/p&gt;
+  &lt;/div&gt;
+  &lt;img slot="art" src="/gorselim.webp"
+    alt="Karakter açıklaması" loading="lazy"&gt;
+&lt;/met3-motion&gt;</code></pre></div></section>
+    <aside class="lab-asset-note"><span>VARLIK NOTU</span><p>Mevcut portreler 195 × 260 piksel. Daha büyük vitrinde netlik için yüksek çözünürlüklü şeffaf karakter görselleri önerilir. Karakterlerin uzuvları veya kumaşları ayrı ayrı hareket etmiyor; çok katmanlı animasyon için ayrı varlık gerekir.</p></aside>
+  </main>
+  <footer class="lab-footer lab-wrap"><span>MET3 ONLINE / ANİMASYON LABORATUVARI V01</span><span>Yerel üretim · Ana sayfaya bağlanmadı</span></footer>
+</body>
+</html>
