@@ -1,0 +1,26 @@
+/* MET3 atmosphere: decorative light only; original media and layout stay intact. */
+.m3-atmosphere { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 9; pointer-events: none; user-select: none; }
+.m3-atmosphere[hidden] { display: none; }
+.m3-atmos-toggle { position: fixed; z-index: 25; right: 22px; bottom: 20px; display: inline-flex; align-items: center; gap: 9px; min-height: 40px; padding: 9px 14px; border: 1px solid #b58b4b69; border-radius: 3px; background: #100c0be8; box-shadow: 0 3px 16px #0005; color: #e8ce9f; font: 600 10px/1.5 Manrope, sans-serif; letter-spacing: .035em; cursor: pointer; }
+.m3-atmos-toggle svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.3; }
+.m3-atmos-toggle:hover { border-color: #dfbb7c; background: #261713; }
+.m3-atmos-toggle:focus-visible { outline: 2px solid #ffe0a4; outline-offset: 4px; }
+.m3-atmos-toggle:disabled { cursor: default; opacity: .65; }
+.m3-atmos-toggle[hidden] { display: none; }
+.m3-atmos-scene { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; user-select: none; contain: strict; }
+.m3-atmos-scene::before, .m3-atmos-scene::after { content: ''; position: absolute; inset: -12%; pointer-events: none; opacity: 0; animation-play-state: paused; }
+.m3-atmos-scene::before { background: radial-gradient(ellipse at 78% 48%, #e96c1b29, transparent 48%), radial-gradient(ellipse at 8% 90%, #921a1a25, transparent 42%); animation: m3-atmos-breathe 13s ease-in-out infinite alternate paused; }
+.m3-atmos-scene::after { background: radial-gradient(ellipse 65% 14% at 20% 85%, #c9b29611, transparent 80%), radial-gradient(ellipse 45% 14% at 76% 98%, #ed84351a, transparent 80%); animation: m3-atmos-mist 23s ease-in-out infinite alternate paused; }
+.hero > .m3-atmos-scene { z-index: -1; }
+.world-stage > .m3-atmos-scene { z-index: 1; }
+.world-stage .world-caption, .world-stage .world-expand { z-index: 2; }
+.community-section { position: relative; isolation: isolate; }
+.community-section > .m3-atmos-scene { z-index: -1; }
+body[data-atmosphere=full] .m3-atmos-scene[data-visible=true]::before,
+body[data-atmosphere=full] .m3-atmos-scene[data-visible=true]::after,
+body[data-atmosphere=soft] .m3-atmos-scene[data-visible=true]::before { animation-play-state: running; }
+body[data-atmosphere=soft] .m3-atmos-scene::after { display: none; }
+@keyframes m3-atmos-breathe { from { opacity: .28; transform: scale(.97) translate3d(-1%,1%,0); } to { opacity: .85; transform: scale(1.035) translate3d(1%,-1%,0); } }
+@keyframes m3-atmos-mist { from { opacity: .3; transform: translate3d(-4%,1%,0); } to { opacity: .65; transform: translate3d(5%,-1%,0); } }
+@media (max-width: 720px) { .m3-atmos-toggle { right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); padding: 8px 11px; min-height: 36px; font-size: 9px; } }
+@media (prefers-reduced-motion: reduce) { .m3-atmos-scene, .m3-atmosphere { display: none !important; } }
